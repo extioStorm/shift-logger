@@ -91,7 +91,6 @@
     .profile-buttons {
         display: flex;
         gap: 8px;
-        margin-top: 8px;
     }
 
     .profile-buttons button {
@@ -118,22 +117,6 @@
         font-weight: normal;
     }
 
-    details {
-        background: #252525;
-        border: 1px solid #444;
-        border-radius: 5px;
-        margin-top: 15px;
-        padding: 8px 12px;
-    }
-
-    summary {
-        font-weight: bold;
-        color: #66ff99;
-        cursor: pointer;
-        padding: 4px 0;
-        user-select: none;
-    }
-
     textarea {
         min-height: 170px;
         resize: vertical;
@@ -146,7 +129,6 @@
         color: white;
         font-weight: bold;
         padding: 14px;
-        margin-top: 15px;
     }
 
     .secondary {
@@ -169,14 +151,6 @@
         margin-top: 15px;
         color: #66ff99;
     }
-
-  .label-hint {
-    color: #888;
-    font-weight: normal;
-    font-size: 14px;
-    margin-left: 6px;
-    }
-
 </style>
 </head>
 
@@ -193,40 +167,39 @@
     <button class="small-button secondary" onclick="createNewBlankProfile()">+ New</button>
 </div>
 
-<details id="jobDetailsPanel">
-    <summary>Job & Project Details</summary>
+<label for="jobNum">Job Number:</label>
+<input type="text" id="jobNum">
 
-    <label for="jobNum">Job Number:</label>
-    <input type="text" id="jobNum" autocomplete="off">
+<label for="fedProject">State/Federal Project ID:</label>
+<input type="text" id="fedProject">
 
-    <label for="fedProject">State/Federal Project ID:</label>
-    <input type="text" id="fedProject" autocomplete="off">
+<div class="two-column">
 
-    <div class="two-column">
-        <div>
-            <label for="hwy">Location/Hwy:</label>
-            <input type="text" id="hwy" autocomplete="off">
-        </div>
-
-        <div>
-            <label for="payItem">Pay Item / Code:</label>
-            <input type="text" id="payItem" autocomplete="off">
-        </div>
+    <div>
+        <label for="hwy">Location/Hwy:</label>
+        <input type="text" id="hwy">
     </div>
 
-    <label for="truck">Vehicle / Notes:</label>
-    <input type="text" id="truck" autocomplete="off">
-
-    <div class="profile-buttons">
-        <button class="secondary" onclick="saveProfile()">Save Profile</button>
-        <button class="danger" onclick="deleteProfile()">Delete Profile</button>
+    <div>
+        <label for="payItem">Pay Item / Code:</label>
+        <input type="text" id="payItem">
     </div>
-</details>
+
+</div>
+
+<label for="truck">Vehicle / Notes:</label>
+<input type="text" id="truck">
+
+<div class="profile-buttons">
+    <button class="secondary" onclick="saveProfile()">Save Profile</button>
+    <button class="danger" onclick="deleteProfile()">Delete Profile</button>
+</div>
 
 <label for="shiftDate">Start Date of Shift:</label>
 <input type="date" id="shiftDate" onchange="shiftDateManuallyChanged()">
 
 <div class="two-column">
+
     <div>
         <label for="startTime">Start Time:</label>
         <select id="startTime" onchange="updateAutomaticShiftDate()"></select>
@@ -236,6 +209,18 @@
         <label for="endTime">End Time:</label>
         <select id="endTime" onchange="updateAutomaticShiftDate()"></select>
     </div>
+
+</div>
+
+<div class="checkbox-row">
+    <input
+        type="checkbox"
+        id="useQuarterHour"
+        onchange="timeRoundingChanged()"
+    >
+    <label for="useQuarterHour">
+        Use 15-minute increments
+    </label>
 </div>
 
 <button class="now-button" id="nowButton" onclick="setEndToNow()">
@@ -250,46 +235,20 @@
     onclick="this.select()"
 >
 
-<label for="odometer">Ending Odometer: <span class="label-hint">(enter 0 for no odometer)</span></label>
+<div class="checkbox-row">
+    <input type="checkbox" id="usePreviousOdometer">
+    <label for="usePreviousOdometer">
+        Include Miles Driven
+    </label>
+</div>
+
+<label for="odometer">Ending Odometer:</label>
 <input
     type="number"
     id="odometer"
     inputmode="numeric"
     onclick="this.select()"
 >
-
-<details>
-    <summary>Shift Options</summary>
-
-    <label for="breakMins">Unpaid Break:</label>
-    <select id="breakMins">
-        <option value="0">None</option>
-        <option value="15">15 mins</option>
-        <option value="30">30 mins</option>
-        <option value="45">45 mins</option>
-        <option value="60">60 mins (1 hr)</option>
-        <option value="90">90 mins (1.5 hrs)</option>
-        <option value="120">120 mins (2 hrs)</option>
-    </select>
-
-    <div class="checkbox-row">
-        <input type="checkbox" id="usePreviousOdometer">
-        <label for="usePreviousOdometer">
-            Include Miles Driven
-        </label>
-    </div>
-
-    <div class="checkbox-row">
-        <input
-            type="checkbox"
-            id="useQuarterHour"
-            onchange="timeRoundingChanged()"
-        >
-        <label for="useQuarterHour">
-            Use 15-minute increments
-        </label>
-    </div>
-</details>
 
 <button class="primary" onclick="generateLog()">
     Generate & Copy Log
@@ -388,9 +347,6 @@ function renderProfiles() {
 
 function loadSelectedProfile() {
     const select = document.getElementById("profileSelect");
-
-    if (select.value === "new") return;
-
     const profiles = getProfiles();
     const index = Number(select.value);
 
@@ -434,18 +390,6 @@ function loadSelectedProfile() {
 ----------------------------- */
 
 function createNewBlankProfile() {
-    const select = document.getElementById("profileSelect");
-
-    let newOption = select.querySelector('option[value="new"]');
-    if (!newOption) {
-        newOption = document.createElement("option");
-        newOption.value = "new";
-        newOption.textContent = "-- Unsaved New Profile --";
-        select.appendChild(newOption);
-    }
-    newOption.selected = true;
-    select.value = "new";
-
     document.getElementById("jobNum").value = "";
     document.getElementById("fedProject").value = "";
     document.getElementById("hwy").value = "";
@@ -466,7 +410,6 @@ function createNewBlankProfile() {
 
     updateNowButtonText();
 
-    document.getElementById("jobDetailsPanel").open = true;
     document.getElementById("jobNum").focus();
 }
 
@@ -478,9 +421,8 @@ function createNewBlankProfile() {
 function saveProfile() {
     const profiles = getProfiles();
     const select = document.getElementById("profileSelect");
-
-    let selectedIndex = select.value === "new" ? -1 : Number(select.value);
-    let existingProfile = profiles[selectedIndex];
+    const selectedIndex = Number(select.value);
+    const existingProfile = profiles[selectedIndex];
 
     let profileName;
 
@@ -491,28 +433,7 @@ function saveProfile() {
         profileName = existingProfile.name;
 
     } else {
-        const hwyVal = document.getElementById("hwy").value.trim();
-        const jobVal = document.getElementById("jobNum").value.trim();
-        const payVal = document.getElementById("payItem").value.trim();
-        const truckVal = document.getElementById("truck").value.trim();
-
-        let defaultName = "";
-
-        if (hwyVal && jobVal) {
-            defaultName = `${hwyVal} (${jobVal})`;
-        } else if (hwyVal) {
-            defaultName = hwyVal;
-        } else if (jobVal) {
-            defaultName = `Job ${jobVal}`;
-        } else if (payVal) {
-            defaultName = `Pay Item ${payVal}`;
-        } else if (truckVal) {
-            defaultName = truckVal;
-        } else {
-            defaultName = "Plant Day";
-        }
-
-        profileName = prompt("Enter a name for this profile:", defaultName);
+        profileName = prompt("Enter a name for this profile:");
 
         if (!profileName) return;
     }
@@ -561,15 +482,8 @@ function saveProfile() {
 ----------------------------- */
 
 function deleteProfile() {
-    const select = document.getElementById("profileSelect");
-
-    if (select.value === "new") {
-        renderProfiles();
-        loadSelectedProfile();
-        return;
-    }
-
     const profiles = getProfiles();
+    const select = document.getElementById("profileSelect");
     const index = Number(select.value);
 
     if (!profiles[index]) return;
@@ -932,9 +846,6 @@ function generateLog() {
     const endTime =
         document.getElementById("endTime").value;
 
-    const breakMins =
-        Number(document.getElementById("breakMins").value);
-
     const shiftDateValue =
         document.getElementById("shiftDate").value;
 
@@ -964,8 +875,8 @@ function generateLog() {
         return;
     }
 
-    if (odometer === "") {
-        alert("Please enter the Ending Odometer (or enter 0 for personal vehicle).");
+    if (!odometer) {
+        alert("Please enter the Ending Odometer.");
         document.getElementById("odometer").focus();
         return;
     }
@@ -983,7 +894,7 @@ function generateLog() {
 
     let milesDriven = null;
 
-    if (usePreviousOdometer && odometer !== "0") {
+    if (usePreviousOdometer) {
 
         if (!previousOdometer) {
             alert(
@@ -1066,54 +977,65 @@ function generateLog() {
        CALCULATION
     ----------------------------- */
 
-    let startMins =
-        startHour * 60 +
-        startMinute;
-
-    let endMins =
-        endHour * 60 +
-        endMinute;
-
-    if (endMins <= startMins) {
-        endMins += 24 * 60;
-    }
-
-    let grossHours =
-        (endMins - startMins) / 60;
-
-    let totalHours = grossHours - (breakMins / 60);
-
-    if (totalHours < 0) totalHours = 0;
+    let totalHours = (end - start) / (1000 * 60 * 60);
 
 
     /* -----------------------------
        DAYLIGHT SAVING TIME
-       EVALUATION
+       DETECTION & USER REVIEW
     ----------------------------- */
 
     let dstNote = "";
 
-    const shiftSpans2AM =
-        startHour >= 12 ||
-        startHour < 2;
+    const crossedDST =
+        start.getTimezoneOffset() !==
+        end.getTimezoneOffset();
 
-    if (shiftSpans2AM) {
+    if (crossedDST) {
 
-        const tzDiff =
-            start.getTimezoneOffset() -
-            end.getTimezoneOffset();
+        const suggestedAdjustment =
+            start.getTimezoneOffset() > end.getTimezoneOffset()
+                ? "-1 hour (Spring Forward)"
+                : "+1 hour (Fall Back)";
 
-        if (tzDiff === -60) {
+        const choice = prompt(
+            "Daylight Saving Time change detected.\n\n" +
+            "Calculated Hours: " + totalHours + "\n\n" +
+            "Depending on how the times were recorded,\n" +
+            "the shift may need a DST adjustment.\n\n" +
+            "Suggested change: " + suggestedAdjustment + "\n\n" +
+            "Choose:\n" +
+            "K = Keep calculated hours\n" +
+            "A = Add 1 hour\n" +
+            "S = Subtract 1 hour",
+            "K"
+        );
+
+        const selection =
+            (choice || "K").trim().toUpperCase();
+
+        if (selection === "A") {
+
             totalHours += 1;
 
             dstNote =
-                " *(Includes +1 hr for Fall Back DST)*";
+                " (DST reviewed: +1 hr applied)";
 
-        } else if (tzDiff === 60) {
+        } else if (selection === "S") {
+
             totalHours -= 1;
 
+            if (totalHours < 0) {
+                totalHours = 0;
+            }
+
             dstNote =
-                " *(Adjusted -1 hr for Spring Forward DST)*";
+                " (DST reviewed: -1 hr applied)";
+
+        } else {
+
+            dstNote =
+                " (DST reviewed: no adjustment)";
         }
     }
 
@@ -1173,16 +1095,16 @@ function generateLog() {
         dstNote
     );
 
-    if (breakMins > 0) {
-        lines.push("Break: " + breakMins + "m unpaid");
-    }
+    lines.push(
+        "Odometer: " +
+        odometer
+    );
 
-    if (odometer !== "0") {
-        lines.push("Odometer: " + odometer);
-    }
-
-    if (usePreviousOdometer && milesDriven !== null) {
-        lines.push("Miles: " + milesDriven);
+    if (usePreviousOdometer) {
+        lines.push(
+            "Miles: " +
+            milesDriven
+        );
     }
 
     if (truck) {
@@ -1197,9 +1119,9 @@ function generateLog() {
 
     copyText(output);
 
-    if (odometer !== "0") {
-        updateProfilePreviousOdometer(odometer);
-    }
+    updateProfilePreviousOdometer(
+        odometer
+    );
 }
 
 
@@ -1210,12 +1132,10 @@ function generateLog() {
 
 function updateProfilePreviousOdometer(odometer) {
 
+    const profiles = getProfiles();
+
     const select =
         document.getElementById("profileSelect");
-
-    if (select.value === "new") return;
-
-    const profiles = getProfiles();
 
     const index =
         Number(select.value);
