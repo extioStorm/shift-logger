@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shift Logger</title>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #1e1e1e;
+        color: #f0f0f0;
+        margin: 0;
+        padding: 15px;
+    }
+
+    .container {
+        max-width: 500px;
+        margin: auto;
+    }
+
+    h2 {
+        text-align: center;
+        color: #66ff99;
+        margin-top: 5px;
+    }
+
+    label {
+        display: block;
+        margin-top: 12px;
+        margin-bottom: 4px;
+        font-weight: bold;
+    }
+
+    input,
+    select,
+    textarea,
+    button {
+        box-sizing: border-box;
+        font-size: 16px;
+    }
+
+    input,
+    select,
+    textarea {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #555;
+        border-radius: 5px;
+        background: #2b2b2b;
+        color: #fff;
+    }
+
+    button {
+        padding: 12px;
+        margin-top: 8px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    .profile-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .profile-row select {
+        flex: 1;
+    }
+
+    .small-button {
+        width: auto;
+        white-space: nowrap;
+    }
+
+    .two-column {
+        display: flex;
+        gap: 8px;
+    }
+
+    .two-column > div {
+        flex: 1;
+    }
+
+    .profile-buttons {
+        display: flex;
+        gap: 8px;
+    }
+
+    .profile-buttons button {
+        flex: 1;
+    }
+
+    .checkbox-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 8px;
+        color: #66ff99;
+    }
+
+    .checkbox-row input[type="checkbox"] {
+        width: auto;
+        margin: 0;
+        transform: scale(1.25);
+    }
+
+    .checkbox-row label {
+        margin: 0;
+        color: #66ff99;
+        font-weight: normal;
+    }
+
+    textarea {
+        min-height: 170px;
+        resize: vertical;
+        margin-top: 8px;
+    }
+
+    .primary {
+        width: 100%;
+        background: #168a45;
+        color: white;
+        font-weight: bold;
+        padding: 14px;
+    }
+
+    .secondary {
+        background: #444;
+        color: white;
+    }
+
+    .danger {
+        background: #8b2020;
+        color: white;
+    }
+
+    .now-button {
+        width: 100%;
+        background: #444;
+        color: #66ff99;
+    }
+
+    .output-label {
+        margin-top: 15px;
+        color: #66ff99;
+    }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Shift Logger</h2>
+
+<label for="profileSelect">Profile:</label>
+
+<div class="profile-row">
+    <select id="profileSelect" onchange="loadSelectedProfile()"></select>
+    <button class="small-button secondary" onclick="createNewBlankProfile()">+ New</button>
+</div>
+
+<label for="jobNum">Job Number:</label>
+<input type="text" id="jobNum">
+
+<label for="fedProject">State/Federal Project ID:</label>
+<input type="text" id="fedProject">
+
+<div class="two-column">
+
+    <div>
+        <label for="hwy">Location/Hwy:</label>
+        <input type="text" id="hwy">
+    </div>
+
+    <div>
+        <label for="payItem">Pay Item / Code:</label>
+        <input type="text" id="payItem">
+    </div>
+
+</div>
+
+<label for="truck">Vehicle / Notes:</label>
+<input type="text" id="truck">
+
+<div class="profile-buttons">
+    <button class="secondary" onclick="saveProfile()">Save Profile</button>
+    <button class="danger" onclick="deleteProfile()">Delete Profile</button>
+</div>
+
+<label for="shiftDate">Start Date of Shift:</label>
+<input type="date" id="shiftDate" onchange="shiftDateManuallyChanged()">
+
+<div class="two-column">
+
+    <div>
+        <label for="startTime">Start Time:</label>
+        <select id="startTime" onchange="updateAutomaticShiftDate()"></select>
+    </div>
+
+    <div>
+        <label for="endTime">End Time:</label>
+        <select id="endTime" onchange="updateAutomaticShiftDate()"></select>
+    </div>
+
+</div>
+
+<div class="checkbox-row">
+    <input
+        type="checkbox"
+        id="useQuarterHour"
+        onchange="timeRoundingChanged()"
+    >
+    <label for="useQuarterHour">
+        Use 15-minute increments
+    </label>
+</div>
+
+<button class="now-button" id="nowButton" onclick="setEndToNow()">
+    Set End Time to NOW (Rounded 30m)
+</button>
+
+<label for="previousOdometer">Previous Odometer:</label>
+<input
+    type="number"
+    id="previousOdometer"
+    inputmode="numeric"
+    onclick="this.select()"
+>
+
+<div class="checkbox-row">
+    <input type="checkbox" id="usePreviousOdometer">
+    <label for="usePreviousOdometer">
+        Include Miles Driven
+    </label>
+</div>
+
+<label for="odometer">Ending Odometer:</label>
+<input
+    type="number"
+    id="odometer"
+    inputmode="numeric"
+    onclick="this.select()"
+>
+
+<button class="primary" onclick="generateLog()">
+    Generate & Copy Log
+</button>
+
+<label class="output-label" for="output">Output:</label>
+<textarea id="output" readonly></textarea>
+
+</div>
+
+<script>
+
+const STORAGE_KEY = "shift_profiles";
+const LAST_PROFILE_KEY = "last_active_profile";
+
+let shiftDateWasManuallyChanged = false;
+
+const defaultProfile = {
+    name: "Hwy 31 (362304)",
+    jobNum: "362304",
+    fedProject: "",
+    hwy: "Hwy 31",
+    payItem: "424A360",
+    truck: "Silver truck",
+    startTime: "19:00",
+    endTime: "06:30",
+    previousOdometer: "",
+    usePreviousOdometer: false,
+    useQuarterHour: false
+};
+
+
+/* -----------------------------
+   PROFILE STORAGE
+----------------------------- */
+
+function getProfiles() {
+    const stored = localStorage.getItem(STORAGE_KEY);
+
+    if (!stored) {
+        return [defaultProfile];
+    }
+
+    try {
+        const profiles = JSON.parse(stored);
+
+        if (!Array.isArray(profiles) || profiles.length === 0) {
+            return [defaultProfile];
+        }
+
+        profiles.forEach(profile => {
+            if (!("previousOdometer" in profile)) {
+                profile.previousOdometer = "";
+            }
+
+            if (!("usePreviousOdometer" in profile)) {
+                profile.usePreviousOdometer = false;
+            }
+
+            if (!("useQuarterHour" in profile)) {
+                profile.useQuarterHour = false;
+            }
+        });
+
+        return profiles;
+
+    } catch (error) {
+        return [defaultProfile];
+    }
+}
+
+
+function saveProfiles(profiles) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(profiles));
+}
+
+
+function renderProfiles() {
+    const select = document.getElementById("profileSelect");
+    const profiles = getProfiles();
+
+    select.innerHTML = "";
+
+    profiles.forEach((profile, index) => {
+        const option = document.createElement("option");
+        option.value = index;
+        option.textContent = profile.name;
+        select.appendChild(option);
+    });
+}
+
+
+/* -----------------------------
+   LOAD PROFILE
+----------------------------- */
+
+function loadSelectedProfile() {
+    const select = document.getElementById("profileSelect");
+    const profiles = getProfiles();
+    const index = Number(select.value);
+
+    if (!profiles[index]) {
+        return;
+    }
+
+    const profile = profiles[index];
+
+    document.getElementById("jobNum").value = profile.jobNum || "";
+    document.getElementById("fedProject").value = profile.fedProject || "";
+    document.getElementById("hwy").value = profile.hwy || "";
+    document.getElementById("payItem").value = profile.payItem || "";
+    document.getElementById("truck").value = profile.truck || "";
+
+    document.getElementById("previousOdometer").value =
+        profile.previousOdometer || "";
+
+    document.getElementById("usePreviousOdometer").checked =
+        profile.usePreviousOdometer === true;
+
+    document.getElementById("useQuarterHour").checked =
+        profile.useQuarterHour === true;
+
+    populateTimes(profile.useQuarterHour === true);
+
+    document.getElementById("startTime").value =
+        profile.startTime || "19:00";
+
+    document.getElementById("endTime").value =
+        profile.endTime || "06:30";
+
+    updateNowButtonText();
+
+    localStorage.setItem(LAST_PROFILE_KEY, String(index));
+}
+
+
+/* -----------------------------
+   NEW PROFILE
+----------------------------- */
+
+function createNewBlankProfile() {
+    document.getElementById("jobNum").value = "";
+    document.getElementById("fedProject").value = "";
+    document.getElementById("hwy").value = "";
+    document.getElementById("payItem").value = "";
+    document.getElementById("truck").value = "";
+
+    document.getElementById("useQuarterHour").checked = false;
+    populateTimes(false);
+
+    document.getElementById("startTime").value = "19:00";
+    document.getElementById("endTime").value = "06:30";
+
+    document.getElementById("previousOdometer").value = "";
+    document.getElementById("usePreviousOdometer").checked = false;
+
+    shiftDateWasManuallyChanged = false;
+    updateAutomaticShiftDate();
+
+    updateNowButtonText();
+
+    document.getElementById("jobNum").focus();
+}
+
+
+/* -----------------------------
+   SAVE PROFILE
+----------------------------- */
+
+function saveProfile() {
+    const profiles = getProfiles();
+    const select = document.getElementById("profileSelect");
+    const selectedIndex = Number(select.value);
+    const existingProfile = profiles[selectedIndex];
+
+    let profileName;
+
+    if (existingProfile) {
+        const overwrite = confirm("Overwrite the current profile?");
+        if (!overwrite) return;
+
+        profileName = existingProfile.name;
+
+    } else {
+        profileName = prompt("Enter a name for this profile:");
+
+        if (!profileName) return;
+    }
+
+    const profile = {
+        name: profileName,
+        jobNum: document.getElementById("jobNum").value.trim(),
+        fedProject: document.getElementById("fedProject").value.trim(),
+        hwy: document.getElementById("hwy").value.trim(),
+        payItem: document.getElementById("payItem").value.trim(),
+        truck: document.getElementById("truck").value.trim(),
+        startTime: document.getElementById("startTime").value,
+        endTime: document.getElementById("endTime").value,
+        previousOdometer: document.getElementById("previousOdometer").value.trim(),
+        usePreviousOdometer:
+            document.getElementById("usePreviousOdometer").checked,
+        useQuarterHour:
+            document.getElementById("useQuarterHour").checked
+    };
+
+    if (existingProfile) {
+        profiles[selectedIndex] = profile;
+    } else {
+        profiles.push(profile);
+    }
+
+    saveProfiles(profiles);
+    renderProfiles();
+
+    const newIndex =
+        existingProfile ? selectedIndex : profiles.length - 1;
+
+    document.getElementById("profileSelect").value = String(newIndex);
+
+    localStorage.setItem(
+        LAST_PROFILE_KEY,
+        String(newIndex)
+    );
+
+    alert("Profile saved.");
+}
+
+
+/* -----------------------------
+   DELETE PROFILE
+----------------------------- */
+
+function deleteProfile() {
+    const profiles = getProfiles();
+    const select = document.getElementById("profileSelect");
+    const index = Number(select.value);
+
+    if (!profiles[index]) return;
+
+    const confirmed = confirm("Delete the current profile?");
+
+    if (!confirmed) return;
+
+    profiles.splice(index, 1);
+
+    if (profiles.length === 0) {
+        profiles.push(defaultProfile);
+    }
+
+    saveProfiles(profiles);
+    localStorage.removeItem(LAST_PROFILE_KEY);
+
+    renderProfiles();
+    createNewBlankProfile();
+}
+
+
+/* -----------------------------
+   TIME DROPDOWNS
+----------------------------- */
+
+function populateTimes(useQuarterHour) {
+    const start = document.getElementById("startTime");
+    const end = document.getElementById("endTime");
+
+    const oldStart = start.value;
+    const oldEnd = end.value;
+
+    start.innerHTML = "";
+    end.innerHTML = "";
+
+    const placeholder1 = document.createElement("option");
+    placeholder1.value = "--";
+    placeholder1.textContent = "--";
+    start.appendChild(placeholder1);
+
+    const placeholder2 = document.createElement("option");
+    placeholder2.value = "--";
+    placeholder2.textContent = "--";
+    end.appendChild(placeholder2);
+
+    const increment = useQuarterHour ? 15 : 30;
+
+    for (let hour = 0; hour < 24; hour++) {
+
+        for (let minute = 0; minute < 60; minute += increment) {
+
+            const value =
+                String(hour).padStart(2, "0") +
+                ":" +
+                String(minute).padStart(2, "0");
+
+            const option1 = document.createElement("option");
+            option1.value = value;
+            option1.textContent = formatTime(value);
+            start.appendChild(option1);
+
+            const option2 = document.createElement("option");
+            option2.value = value;
+            option2.textContent = formatTime(value);
+            end.appendChild(option2);
+        }
+    }
+
+    if (oldStart && oldStart !== "--") {
+        const startOptionExists =
+            Array.from(start.options).some(
+                option => option.value === oldStart
+            );
+
+        if (startOptionExists) {
+            start.value = oldStart;
+        } else {
+            start.value = "--";
+        }
+    } else {
+        start.value = "--";
+    }
+
+    if (oldEnd && oldEnd !== "--") {
+        const endOptionExists =
+            Array.from(end.options).some(
+                option => option.value === oldEnd
+            );
+
+        if (endOptionExists) {
+            end.value = oldEnd;
+        } else {
+            end.value = "--";
+        }
+    } else {
+        end.value = "--";
+    }
+}
+
+
+function timeRoundingChanged() {
+    const useQuarterHour =
+        document.getElementById("useQuarterHour").checked;
+
+    populateTimes(useQuarterHour);
+    updateNowButtonText();
+    updateAutomaticShiftDate();
+}
+
+
+function updateNowButtonText() {
+    const useQuarterHour =
+        document.getElementById("useQuarterHour").checked;
+
+    const button = document.getElementById("nowButton");
+
+    if (useQuarterHour) {
+        button.textContent =
+            "Set End Time to NOW (Rounded 15m)";
+    } else {
+        button.textContent =
+            "Set End Time to NOW (Rounded 30m)";
+    }
+}
+
+
+function formatTime(timeValue) {
+    const parts = timeValue.split(":");
+
+    let hour = Number(parts[0]);
+    const minute = parts[1];
+
+    const suffix = hour >= 12 ? "PM" : "AM";
+
+    hour = hour % 12;
+
+    if (hour === 0) {
+        hour = 12;
+    }
+
+    return hour + ":" + minute + " " + suffix;
+}
+
+
+/* -----------------------------
+   AUTOMATIC SHIFT DATE
+----------------------------- */
+
+function shiftDateManuallyChanged() {
+    const dateValue =
+        document.getElementById("shiftDate").value;
+
+    shiftDateWasManuallyChanged = !!dateValue;
+}
+
+
+function updateAutomaticShiftDate() {
+    if (shiftDateWasManuallyChanged) return;
+
+    const startVal =
+        document.getElementById("startTime").value;
+
+    const endVal =
+        document.getElementById("endTime").value;
+
+    if (!startVal || startVal === "--" ||
+        !endVal || endVal === "--") {
+        return;
+    }
+
+    const startParts = startVal.split(":");
+    const endParts = endVal.split(":");
+
+    const startMinutes =
+        Number(startParts[0]) * 60 +
+        Number(startParts[1]);
+
+    const endMinutes =
+        Number(endParts[0]) * 60 +
+        Number(endParts[1]);
+
+    const date = new Date();
+
+    if (endMinutes < startMinutes) {
+        date.setDate(date.getDate() - 1);
+    }
+
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const dd = String(date.getDate()).padStart(2, "0");
+
+    document.getElementById("shiftDate").value =
+        yyyy + "-" + mm + "-" + dd;
+}
+
+
+/* -----------------------------
+   SET END TIME TO NOW
+----------------------------- */
+
+function setEndToNow() {
+    const now = new Date();
+
+    let hour = now.getHours();
+    let minute = now.getMinutes();
+
+    const useQuarterHour =
+        document.getElementById("useQuarterHour").checked;
+
+    if (useQuarterHour) {
+
+        if (minute < 8) {
+            minute = 0;
+
+        } else if (minute < 23) {
+            minute = 15;
+
+        } else if (minute < 38) {
+            minute = 30;
+
+        } else if (minute < 53) {
+            minute = 45;
+
+        } else {
+            minute = 0;
+            hour++;
+
+            if (hour >= 24) {
+                hour = 0;
+            }
+        }
+
+    } else {
+
+        if (minute < 15) {
+            minute = 0;
+
+        } else if (minute < 45) {
+            minute = 30;
+
+        } else {
+            minute = 0;
+            hour++;
+
+            if (hour >= 24) {
+                hour = 0;
+            }
+        }
+    }
+
+    const value =
+        String(hour).padStart(2, "0") +
+        ":" +
+        String(minute).padStart(2, "0");
+
+    document.getElementById("endTime").value = value;
+
+    updateAutomaticShiftDate();
+}
+
+
+/* -----------------------------
+   DATE FORMATTING
+----------------------------- */
+
+const days = [
+    "Sun", "Mon", "Tue", "Wed",
+    "Thu", "Fri", "Sat"
+];
+
+const months = [
+    "Jan", "Feb", "Mar", "Apr",
+    "May", "Jun", "Jul", "Aug",
+    "Sep", "Oct", "Nov", "Dec"
+];
+
+
+function formatDate(date) {
+    return (
+        days[date.getDay()] +
+        " " +
+        months[date.getMonth()] +
+        " " +
+        date.getDate()
+    );
+}
+
+
+function formatShiftDates(startDate, endDate) {
+    const startYear = startDate.getFullYear();
+    const endYear = endDate.getFullYear();
+
+    if (startYear !== endYear) {
+        return (
+            formatDate(startDate) +
+            ", " +
+            startYear +
+            " - " +
+            formatDate(endDate) +
+            ", " +
+            endYear
+        );
+    }
+
+    if (startDate.getMonth() !== endDate.getMonth()) {
+        return (
+            formatDate(startDate) +
+            "-" +
+            formatDate(endDate)
+        );
+    }
+
+    if (startDate.getDate() !== endDate.getDate()) {
+        return (
+            days[startDate.getDay()] +
+            "-" +
+            days[endDate.getDay()] +
+            " " +
+            months[startDate.getMonth()] +
+            " " +
+            startDate.getDate() +
+            "-" +
+            endDate.getDate()
+        );
+    }
+
+    return formatDate(startDate);
+}
+
+
+/* -----------------------------
+   GENERATE LOG
+----------------------------- */
+
+function generateLog() {
+
+    if (!shiftDateWasManuallyChanged) {
+        updateAutomaticShiftDate();
+    }
+
+    const jobNum =
+        document.getElementById("jobNum").value.trim();
+
+    const fedProject =
+        document.getElementById("fedProject").value.trim();
+
+    const hwy =
+        document.getElementById("hwy").value.trim();
+
+    const payItem =
+        document.getElementById("payItem").value.trim();
+
+    const truck =
+        document.getElementById("truck").value.trim();
+
+    const startTime =
+        document.getElementById("startTime").value;
+
+    const endTime =
+        document.getElementById("endTime").value;
+
+    const shiftDateValue =
+        document.getElementById("shiftDate").value;
+
+    const previousOdometer =
+        document.getElementById("previousOdometer").value.trim();
+
+    const usePreviousOdometer =
+        document.getElementById("usePreviousOdometer").checked;
+
+    const odometer =
+        document.getElementById("odometer").value.trim();
+
+
+    /* -----------------------------
+       VALIDATION
+    ----------------------------- */
+
+    if (!startTime || startTime === "--") {
+        alert("Please select a Start Time.");
+        document.getElementById("startTime").focus();
+        return;
+    }
+
+    if (!endTime || endTime === "--") {
+        alert("Please select an End Time.");
+        document.getElementById("endTime").focus();
+        return;
+    }
+
+    if (!odometer) {
+        alert("Please enter the Ending Odometer.");
+        document.getElementById("odometer").focus();
+        return;
+    }
+
+    if (!shiftDateValue) {
+        alert("Please select a Start Date of Shift.");
+        document.getElementById("shiftDate").focus();
+        return;
+    }
+
+
+    /* -----------------------------
+       MILEAGE VALIDATION
+    ----------------------------- */
+
+    let milesDriven = null;
+
+    if (usePreviousOdometer) {
+
+        if (!previousOdometer) {
+            alert(
+                "Include Miles Driven is checked, but Previous Odometer is blank."
+            );
+
+            document.getElementById("previousOdometer").focus();
+            return;
+        }
+
+        const previous = Number(previousOdometer);
+        const ending = Number(odometer);
+
+        if (ending < previous) {
+            alert(
+                "Ending odometer cannot be less than Previous Odometer."
+            );
+
+            document.getElementById("odometer").focus();
+            return;
+        }
+
+        milesDriven = ending - previous;
+    }
+
+
+    /* -----------------------------
+       CREATE SHIFT DATES
+    ----------------------------- */
+
+    const startDateParts =
+        shiftDateValue.split("-");
+
+    const startDate = new Date(
+        Number(startDateParts[0]),
+        Number(startDateParts[1]) - 1,
+        Number(startDateParts[2])
+    );
+
+    const startParts = startTime.split(":");
+    const endParts = endTime.split(":");
+
+    const startHour = Number(startParts[0]);
+    const startMinute = Number(startParts[1]);
+
+    const endHour = Number(endParts[0]);
+    const endMinute = Number(endParts[1]);
+
+
+    const start = new Date(startDate);
+
+    start.setHours(
+        startHour,
+        startMinute,
+        0,
+        0
+    );
+
+
+    const end = new Date(startDate);
+
+    end.setHours(
+        endHour,
+        endMinute,
+        0,
+        0
+    );
+
+
+    if (
+        endHour * 60 + endMinute <=
+        startHour * 60 + startMinute
+    ) {
+        end.setDate(end.getDate() + 1);
+    }
+
+
+    /* -----------------------------
+       STANDARD CLOCK FACE
+       CALCULATION
+    ----------------------------- */
+
+    let startMins =
+        startHour * 60 +
+        startMinute;
+
+    let endMins =
+        endHour * 60 +
+        endMinute;
+
+    if (endMins <= startMins) {
+        endMins += 24 * 60;
+    }
+
+    let totalHours =
+        (endMins - startMins) / 60;
+
+
+    /* -----------------------------
+       DAYLIGHT SAVING TIME
+       EVALUATION
+    ----------------------------- */
+
+    let dstNote = "";
+
+    const shiftSpans2AM =
+        startHour >= 12 ||
+        startHour < 2;
+
+    if (shiftSpans2AM) {
+
+        const tzDiff =
+            start.getTimezoneOffset() -
+            end.getTimezoneOffset();
+
+        if (tzDiff === -60) {
+            totalHours += 1;
+
+            dstNote =
+                " *(Includes +1 hr for Fall Back DST)*";
+
+        } else if (tzDiff === 60) {
+            totalHours -= 1;
+
+            dstNote =
+                " *(Adjusted -1 hr for Spring Forward DST)*";
+        }
+    }
+
+
+    /* -----------------------------
+       LONG SHIFT WARNING
+    ----------------------------- */
+
+    if (totalHours > 16) {
+
+        const proceed = confirm(
+            "This shift calculates to " +
+            totalHours +
+            " hours.\n\n" +
+            "Are you sure the start and end times are correct?"
+        );
+
+        if (!proceed) return;
+    }
+
+
+    /* -----------------------------
+       BUILD OUTPUT
+    ----------------------------- */
+
+    const lines = [];
+
+    if (jobNum) {
+        lines.push("Job#: " + jobNum);
+    }
+
+    if (fedProject) {
+        lines.push(fedProject);
+    }
+
+    if (hwy) {
+        lines.push(hwy);
+    }
+
+    if (payItem) {
+        lines.push(payItem);
+    }
+
+    lines.push(
+        "Date: " +
+        formatShiftDates(start, end)
+    );
+
+    lines.push(
+        "Hours: " +
+        formatTime(startTime) +
+        " - " +
+        formatTime(endTime) +
+        " (" +
+        totalHours +
+        " hours)" +
+        dstNote
+    );
+
+    lines.push(
+        "Odometer: " +
+        odometer
+    );
+
+    if (usePreviousOdometer) {
+        lines.push(
+            "Miles: " +
+            milesDriven
+        );
+    }
+
+    if (truck) {
+        lines.push(truck);
+    }
+
+
+    const output = lines.join("\n");
+
+    document.getElementById("output").value =
+        output;
+
+    copyText(output);
+
+    updateProfilePreviousOdometer(
+        odometer
+    );
+}
+
+
+/* -----------------------------
+   SAVE CURRENT ODOMETER
+   AS PROFILE'S PREVIOUS ODOMETER
+----------------------------- */
+
+function updateProfilePreviousOdometer(odometer) {
+
+    const profiles = getProfiles();
+
+    const select =
+        document.getElementById("profileSelect");
+
+    const index =
+        Number(select.value);
+
+    if (profiles[index]) {
+
+        profiles[index].previousOdometer =
+            String(odometer);
+
+        profiles[index].usePreviousOdometer =
+            document.getElementById(
+                "usePreviousOdometer"
+            ).checked;
+
+        profiles[index].useQuarterHour =
+            document.getElementById(
+                "useQuarterHour"
+            ).checked;
+
+        saveProfiles(profiles);
+    }
+
+    document.getElementById(
+        "previousOdometer"
+    ).value = String(odometer);
+}
+
+
+/* -----------------------------
+   COPY
+----------------------------- */
+
+function copyText(text) {
+
+    if (
+        navigator.clipboard &&
+        navigator.clipboard.writeText
+    ) {
+
+        navigator.clipboard
+            .writeText(text)
+            .then(() => {
+                alert("Log copied to clipboard.");
+            })
+            .catch(() => {
+                fallbackCopy(text);
+            });
+
+    } else {
+        fallbackCopy(text);
+    }
+}
+
+
+function fallbackCopy(text) {
+
+    const textarea =
+        document.getElementById("output");
+
+    textarea.focus();
+    textarea.select();
+
+    try {
+
+        document.execCommand("copy");
+
+        alert("Log copied to clipboard.");
+
+    } catch (error) {
+
+        alert(
+            "Log generated, but automatic copying failed. " +
+            "Please copy the text manually."
+        );
+    }
+}
+
+
+/* -----------------------------
+   INITIALIZATION
+----------------------------- */
+
+function init() {
+
+    populateTimes(false);
+    renderProfiles();
+
+    const today = new Date();
+
+    const yyyy =
+        today.getFullYear();
+
+    const mm =
+        String(today.getMonth() + 1)
+            .padStart(2, "0");
+
+    const dd =
+        String(today.getDate())
+            .padStart(2, "0");
+
+    document.getElementById("shiftDate").value =
+        yyyy + "-" + mm + "-" + dd;
+
+    shiftDateWasManuallyChanged = false;
+
+
+    const profiles = getProfiles();
+
+    const lastProfile =
+        localStorage.getItem(
+            LAST_PROFILE_KEY
+        );
+
+
+    if (
+        lastProfile !== null &&
+        profiles[Number(lastProfile)]
+    ) {
+
+        document.getElementById(
+            "profileSelect"
+        ).value = lastProfile;
+
+    } else {
+
+        document.getElementById(
+            "profileSelect"
+        ).value = "0";
+    }
+
+
+    loadSelectedProfile();
+
+    document.getElementById(
+        "odometer"
+    ).value = "";
+}
+
+
+window.onload = init;
+
+</script>
+
+</body>
+</html>
