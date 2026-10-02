@@ -169,6 +169,14 @@
         margin-top: 15px;
         color: #66ff99;
     }
+
+  .label-hint {
+    color: #888;
+    font-weight: normal;
+    font-size: 14px;
+    margin-left: 6px;
+    }
+
 </style>
 </head>
 
@@ -234,17 +242,6 @@
     Set End Time to NOW (Rounded 30m)
 </button>
 
-<label for="breakMins">Unpaid Break:</label>
-<select id="breakMins">
-    <option value="0">None</option>
-    <option value="15">15 mins</option>
-    <option value="30">30 mins</option>
-    <option value="45">45 mins</option>
-    <option value="60">60 mins (1 hr)</option>
-    <option value="90">90 mins (1.5 hrs)</option>
-    <option value="120">120 mins (2 hrs)</option>
-</select>
-
 <label for="previousOdometer">Previous Odometer:</label>
 <input
     type="number"
@@ -253,7 +250,7 @@
     onclick="this.select()"
 >
 
-<label for="odometer">Ending Odometer:</label>
+<label for="odometer">Ending Odometer: <span class="label-hint">(enter 0 for no odometer)</span></label>
 <input
     type="number"
     id="odometer"
@@ -263,6 +260,17 @@
 
 <details>
     <summary>Shift Options</summary>
+
+    <label for="breakMins">Unpaid Break:</label>
+    <select id="breakMins">
+        <option value="0">None</option>
+        <option value="15">15 mins</option>
+        <option value="30">30 mins</option>
+        <option value="45">45 mins</option>
+        <option value="60">60 mins (1 hr)</option>
+        <option value="90">90 mins (1.5 hrs)</option>
+        <option value="120">120 mins (2 hrs)</option>
+    </select>
 
     <div class="checkbox-row">
         <input type="checkbox" id="usePreviousOdometer">
