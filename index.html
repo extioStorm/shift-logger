@@ -1044,21 +1044,16 @@ function generateLog() {
     }
 
 
-    /* -----------------------------
-       LONG SHIFT WARNING
-    ----------------------------- */
-
-    if (totalHours > 16) {
-
-        const proceed = confirm(
-            "This shift calculates to " +
-            totalHours +
-            " hours.\n\n" +
-            "Are you sure the start and end times are correct?"
-        );
-
-        if (!proceed) return;
-    }
+// --------------------------------------------------
+// Combined Shift Length Warning
+// --------------------------------------------------
+if (totalHours < 4 || totalHours > 16) {
+    const proceed = confirm(
+        "This shift calculates to " + totalHours + " hours.\n\n" +
+        "Are you sure the start and end times are correct?"
+    );
+    if (!proceed) return;
+}
 
 
     /* -----------------------------
