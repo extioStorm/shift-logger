@@ -9,8 +9,8 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1e1e1e">
 
-<!-- Local Offline Tesseract Engine -->
-<script src="./tesseract.min.js"></script>
+<!-- CDN Tesseract Engine -->
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
 <style>
     * {
@@ -322,7 +322,6 @@
     Set End Time to NOW (Rounded 30m)
 </button>
 
-<!-- Previous Odometer dynamically hidden/shown based on 'Include Miles Driven' check -->
 <div id="previousOdometerGroup" style="display: none;">
     <label for="previousOdometer">Previous Odometer:</label>
     <input
@@ -402,7 +401,7 @@ const defaultProfile = {
     useQuarterHour: false
 };
 
-// Odometer OCR Trigger Handling
+// Odometer OCR Trigger Handling via CDN
 document.getElementById('scanBtn').addEventListener('click', () => {
     document.getElementById('ocrCameraInput').click();
 });
@@ -414,14 +413,10 @@ document.getElementById('ocrCameraInput').addEventListener('change', async (even
     const statusEl = document.getElementById('ocr-status');
 
     try {
-        statusEl.textContent = "Loading offline engine...";
+        statusEl.textContent = "Loading OCR engine...";
 
-        // Initialize Tesseract using local offline files
-        const worker = await Tesseract.createWorker('eng', 1, {
-            workerPath: './worker.min.js',
-            corePath: './tesseract-core-simd.wasm',
-            langPath: './'
-        });
+        // Standard CDN Worker Initialization
+        const worker = await Tesseract.createWorker('eng');
 
         statusEl.textContent = "Scanning odometer...";
         const result = await worker.recognize(file);
@@ -438,8 +433,8 @@ document.getElementById('ocrCameraInput').addEventListener('change', async (even
 
         await worker.terminate();
     } catch (err) {
-        console.error(err);
-        statusEl.textContent = "Scan failed. Enter manually.";
+        console.error("OCR Error:", err);
+        statusEl.textContent = "Error: " + (err.message || "Scan failed.");
     } finally {
         event.target.value = '';
     }
