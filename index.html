@@ -402,6 +402,7 @@ const defaultProfile = {
 };
 
 // Odometer OCR Trigger Handling via CDN
+// Odometer OCR Trigger Handling with Detailed On-Screen Diagnostics
 document.getElementById('scanBtn').addEventListener('click', () => {
     document.getElementById('ocrCameraInput').click();
 });
@@ -412,33 +413,66 @@ document.getElementById('ocrCameraInput').addEventListener('change', async (even
 
     const statusEl = document.getElementById('ocr-status');
 
+    // Helper to log timestamps and detailed messages directly to the UI
+    const log = (msg) => {
+        const time = new Date().toLocaleTimeString();
+        statusEl.innerHTML += `<br>[${time}] ${msg}`;
+        console.log(`[OCR Log] ${msg}`);
+    };
+
+    statusEl.innerHTML = "<strong>Starting scan...</strong>";
+
     try {
-        statusEl.textContent = "Loading OCR engine...";
+        log(`File selected: ${file.name} (${Math.round(file.size / 1024)} KB)`);
+        log("Loading Tesseract engine from CDN...");
 
-        // Standard CDN Worker Initialization
-        const worker = await Tesseract.createWorker('eng');
+        const worker = await Tesseract.createWorker('eng', 1, {
+            logger: m => {
+                // Log major progress milestones (Worker loading, traineddata download, recognition)
+                if (m.status && m.progress !== undefined) {
+                    const pct = Math.round(m.progress * 100);
+                    if (pct % 25 === 0) {
+                        log(`Engine progress: ${m.status} (${pct}%)`);
+                    }
+                }
+            }
+        });
 
-        statusEl.textContent = "Scanning odometer...";
+        log("Processing image...");
         const result = await worker.recognize(file);
+        const rawText = result.data.text.trim();
 
-        // Extract numbers 4 to 7 digits long
-        const matches = result.data.text.match(/\b\d{4,7}\b/);
+        log(`Raw text detected: "${rawText.replace(/\n/g, ' ')}"`);
 
-        if (matches && matches[0]) {
-            document.getElementById('odometer').value = matches[0];
-            statusEl.textContent = `Scanned: ${matches[0]}`;
+        // Clean raw text: remove non-numeric noise except newlines/spaces
+        const cleanedText = rawText.replace(/[^\d\n\s]/g, '');
+
+        // Match digit sequences from 3 to 7 digits long
+        const matches = cleanedText.match(/\d{3,7}/g);
+
+        if (matches && matches.length > 0) {
+            // Select the longest digit sequence found
+            const odometerReading = matches.reduce((a, b) => a.length >= b.length ? a : b);
+            document.getElementById('odometer').value = odometerReading;
+            log(`<strong style="color: #66ff99;">SUCCESS: Set odometer to ${odometerReading}</strong> (Matches found: ${matches.join(', ')})`);
         } else {
-            statusEl.textContent = "No odometer sequence detected.";
+            log('<strong style="color: #ff9999;">NO MATCH: No sequence of 3-7 digits found in raw text.</strong>');
         }
 
         await worker.terminate();
+        log("Engine terminated cleanly.");
+
     } catch (err) {
-        console.error("OCR Error:", err);
-        statusEl.textContent = "Error: " + (err.message || "Scan failed.");
+        console.error("Full OCR Error Object:", err);
+        
+        // Print detailed exception info to screen
+        let errDetails = err.stack || err.message || JSON.stringify(err);
+        statusEl.innerHTML += `<br><strong style="color:#ff6666;">ERROR: ${errDetails}</strong>`;
     } finally {
         event.target.value = '';
     }
 });
+
 
 function togglePreviousOdometer() {
     const isChecked = document.getElementById("usePreviousOdometer").checked;
