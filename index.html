@@ -792,6 +792,7 @@ function setEndToNow() {
     }
 }
 
+
 /* -----------------------------
    DATE FORMATTING
 ----------------------------- */
@@ -1037,7 +1038,7 @@ function generateLog() {
         start.getTimezoneOffset() !==
         end.getTimezoneOffset();
 
-if (crossedDST) {
+    if (crossedDST) {
 
         const suggestedAdjustment =
             start.getTimezoneOffset() > end.getTimezoneOffset()
