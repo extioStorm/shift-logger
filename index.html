@@ -780,30 +780,39 @@ function generateLog() {
         end.setDate(end.getDate() + 1);
     }
 
-    let totalHours = ((end - start) / (1000 * 60 * 60)) - (breakMins / 60);
+    // Pure wall-clock minute calculation (timezone-agnostic)
+    let startTotalMins = startHour * 60 + startMinute;
+    let endTotalMins = endHour * 60 + endMinute;
+
+    if (endTotalMins <= startTotalMins) {
+        endTotalMins += 24 * 60; // Shift spans overnight
+    }
+
+    const rawWorkedMins = endTotalMins - startTotalMins;
+    let totalHours = (rawWorkedMins / 60) - (breakMins / 60);
     if (totalHours < 0) totalHours = 0;
 
     let dstNote = "";
-if (start.getTimezoneOffset() !== end.getTimezoneOffset()) {
-    // start > end means offset got smaller -> Spring Forward -> lost 1 hour of physical work
-    const isSpringForward = start.getTimezoneOffset() > end.getTimezoneOffset();
-    const adjustmentAmount = isSpringForward ? -1 : 1;
-    const adjustmentLabel = isSpringForward ? "-1 hour (Spring Forward)" : "+1 hour (Fall Back)";
+    if (start.getTimezoneOffset() !== end.getTimezoneOffset()) {
+        const isSpringForward = start.getTimezoneOffset() > end.getTimezoneOffset();
+        const adjustmentAmount = isSpringForward ? -1 : 1;
+        const adjustmentLabel = isSpringForward ? "-1 hour (Spring Forward)" : "+1 hour (Fall Back)";
 
-    const applyAdjustment = confirm(
-        "Daylight Saving Time change detected.\n\n" +
-        "Calculated Hours (Raw): " + totalHours + "\n\n" +
-        "Click OK to apply detected adjustment [" + adjustmentLabel + "]\n" +
-        "Click Cancel to keep raw calculated hours."
-    );
+        const applyAdjustment = confirm(
+            "Daylight Saving Time change detected.\n\n" +
+            "Calculated Hours (Raw): " + totalHours + "\n\n" +
+            "Did your clock automatically update for DST?\n" +
+            "Click OK to apply adjustment [" + adjustmentLabel + "]\n" +
+            "Click Cancel to keep raw wall-clock hours."
+        );
 
-    if (applyAdjustment) {
-        totalHours = Math.max(0, totalHours + adjustmentAmount);
-        dstNote = " (DST adjusted: " + (isSpringForward ? "-1 hr" : "+1 hr") + ")";
-    } else {
-        dstNote = " (DST reviewed: no adjustment)";
+        if (applyAdjustment) {
+            totalHours = Math.max(0, totalHours + adjustmentAmount);
+            dstNote = " (DST adjusted: " + (isSpringForward ? "-1 hr" : "+1 hr") + ")";
+        } else {
+            dstNote = " (DST reviewed: no adjustment)";
+        }
     }
-}
 
     if (totalHours < 4 || totalHours > 16) {
         if (!confirm("This shift calculates to " + totalHours + " hours.\n\nAre you sure the start and end times are correct?")) return;
