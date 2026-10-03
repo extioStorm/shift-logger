@@ -279,7 +279,7 @@
 
     <div class="two-column" style="width: 100%; margin: 0;">
         <div>
-            <label for="location">Location / Hwy / Plant:</label>
+            <label for="location">Location:</label>
             <input type="text" id="location" autocomplete="off">
         </div>
 
@@ -428,12 +428,12 @@ if ('serviceWorker' in navigator) {
 }
 
 const defaultProfile = {
-    name: "Plant Day",
-    jobNum: "362304",
+    name: "Default",
+    jobNum: "000000",
     fedProject: "",
-    location: "Plant",
-    payItem: "424A360",
-    truck: "Silver truck",
+    location: "",
+    payItem: "420***",
+    truck: "",
     startTime: "--",
     endTime: "--",
     previousOdometer: "",
@@ -642,7 +642,7 @@ function saveProfile() {
         else if (jobVal) defaultName = `Job ${jobVal}`;
         else if (payVal) defaultName = `Pay Item ${payVal}`;
         else if (truckVal) defaultName = truckVal;
-        else defaultName = "Plant Day";
+        else defaultName = "Default";
 
         profileName = prompt("Enter a name for this profile:", defaultName);
 
