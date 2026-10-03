@@ -1,158 +1,181 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shift Logger</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shift Logger</title>
 
-    <link rel="icon" type="image/png" sizes="48x48" href="shift-logger-favicon-48.png">
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#1e1e1e">
+<link rel="icon" type="image/png" sizes="48x48" href="shift-logger-favicon-48.png">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1e1e1e">
 
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #1e1e1e;
-            color: #f0f0f0;
-            margin: 0;
-            padding: 15px;
-        }
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #1e1e1e;
+        color: #f0f0f0;
+        margin: 0;
+        padding: 15px;
+    }
 
-        .container {
-            max-width: 500px;
-            margin: auto;
-        }
+    .container {
+        max-width: 500px;
+        margin: auto;
+    }
 
-        h2 {
-            text-align: center;
-            color: #66ff99;
-            margin-top: 5px;
-        }
+    h2 {
+        text-align: center;
+        color: #66ff99;
+        margin-top: 5px;
+    }
 
-        label {
-            display: block;
-            margin-top: 12px;
-            margin-bottom: 4px;
-            font-weight: bold;
-        }
+    label {
+        display: block;
+        margin-top: 12px;
+        margin-bottom: 4px;
+        font-weight: bold;
+    }
 
-        input,
-        select,
-        textarea,
-        button {
-            box-sizing: border-box;
-            font-size: 16px;
-        }
+    input,
+    select,
+    textarea,
+    button {
+        box-sizing: border-box;
+        font-size: 16px;
+    }
 
-        input,
-        select,
-        textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #555;
-            border-radius: 5px;
-            background: #2b2b2b;
-            color: #fff;
-        }
+    input,
+    select,
+    textarea {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #555;
+        border-radius: 5px;
+        background: #2b2b2b;
+        color: #fff;
+    }
 
-        button {
-            padding: 12px;
-            margin-top: 8px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
+    button {
+        padding: 12px;
+        margin-top: 8px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
 
-        .profile-row {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
+    .profile-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
 
-        .profile-row select {
-            flex: 1;
-        }
+    .profile-row select {
+        flex: 1;
+    }
 
-        .small-button {
-            width: auto;
-            white-space: nowrap;
-        }
+    .small-button {
+        width: auto;
+        white-space: nowrap;
+    }
 
-        .two-column {
-            display: flex;
-            gap: 8px;
-        }
+    .two-column {
+        display: flex;
+        gap: 8px;
+    }
 
-        .two-column > div {
-            flex: 1;
-        }
+    .two-column > div {
+        flex: 1;
+    }
 
-        .profile-buttons {
-            display: flex;
-            gap: 8px;
-            margin-top: 10px;
-        }
+    .profile-buttons {
+        display: flex;
+        gap: 8px;
+        margin-top: 8px;
+    }
 
-        .profile-buttons button {
-            flex: 1;
-        }
+    .profile-buttons button {
+        flex: 1;
+    }
 
-        .checkbox-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 10px;
-            color: #66ff99;
-        }
+    .checkbox-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 8px;
+        color: #66ff99;
+    }
 
-        .checkbox-row input[type="checkbox"] {
-            width: auto;
-            margin: 0;
-            transform: scale(1.25);
-        }
+    .checkbox-row input[type="checkbox"] {
+        width: auto;
+        margin: 0;
+        transform: scale(1.25);
+    }
 
-        .checkbox-row label {
-            margin: 0;
-            color: #66ff99;
-            font-weight: normal;
-        }
+    .checkbox-row label {
+        margin: 0;
+        color: #66ff99;
+        font-weight: normal;
+    }
 
-        textarea {
-            min-height: 170px;
-            resize: vertical;
-            margin-top: 8px;
-        }
+    details {
+        background: #252525;
+        border: 1px solid #444;
+        border-radius: 5px;
+        margin-top: 15px;
+        padding: 8px 12px;
+    }
 
-        .primary {
-            width: 100%;
-            background: #168a45;
-            color: white;
-            font-weight: bold;
-            padding: 14px;
-            margin-top: 15px;
-        }
+    summary {
+        font-weight: bold;
+        color: #66ff99;
+        cursor: pointer;
+        padding: 4px 0;
+        user-select: none;
+    }
 
-        .secondary {
-            background: #444;
-            color: white;
-        }
+    textarea {
+        min-height: 170px;
+        resize: vertical;
+        margin-top: 8px;
+    }
 
-        .danger {
-            background: #8b2020;
-            color: white;
-        }
+    .primary {
+        width: 100%;
+        background: #168a45;
+        color: white;
+        font-weight: bold;
+        padding: 14px;
+        margin-top: 15px;
+    }
 
-        .now-button {
-            width: 100%;
-            background: #444;
-            color: #66ff99;
-        }
+    .secondary {
+        background: #444;
+        color: white;
+    }
 
-        .output-label {
-            margin-top: 15px;
-            color: #66ff99;
-        }
-    </style>
+    .danger {
+        background: #8b2020;
+        color: white;
+    }
+
+    .now-button {
+        width: 100%;
+        background: #444;
+        color: #66ff99;
+    }
+
+    .output-label {
+        margin-top: 15px;
+        color: #66ff99;
+    }
+
+    .label-hint {
+        color: #888;
+        font-weight: normal;
+        font-size: 14px;
+        margin-left: 6px;
+    }
+</style>
 </head>
 
 <body>
@@ -168,31 +191,35 @@
     <button class="small-button secondary" onclick="createNewBlankProfile()">+ New</button>
 </div>
 
-<label for="jobNum">Job Number:</label>
-<input type="text" id="jobNum">
+<details id="jobDetailsPanel">
+    <summary>Job & Project Details</summary>
 
-<label for="fedProject">State/Federal Project ID:</label>
-<input type="text" id="fedProject">
+    <label for="jobNum">Job Number:</label>
+    <input type="text" id="jobNum" autocomplete="off">
 
-<div class="two-column">
-    <div>
-        <label for="location">Location:</label>
-        <input type="text" id="location">
+    <label for="fedProject">State/Federal Project ID:</label>
+    <input type="text" id="fedProject" autocomplete="off">
+
+    <div class="two-column">
+        <div>
+            <label for="location">Location / Hwy / Plant:</label>
+            <input type="text" id="location" autocomplete="off">
+        </div>
+
+        <div>
+            <label for="payItem">Pay Item / Code:</label>
+            <input type="text" id="payItem" autocomplete="off">
+        </div>
     </div>
 
-    <div>
-        <label for="payItem">Pay Item / Code:</label>
-        <input type="text" id="payItem">
+    <label for="truck">Vehicle / Notes:</label>
+    <input type="text" id="truck" autocomplete="off">
+
+    <div class="profile-buttons">
+        <button class="secondary" onclick="saveProfile()">Save Profile</button>
+        <button class="danger" onclick="deleteProfile()">Delete Profile</button>
     </div>
-</div>
-
-<label for="truck">Vehicle / Notes:</label>
-<input type="text" id="truck">
-
-<div class="profile-buttons">
-    <button class="secondary" onclick="saveProfile()">Save Profile</button>
-    <button class="danger" onclick="deleteProfile()">Delete Profile</button>
-</div>
+</details>
 
 <label for="shiftDate">Start Date of Shift:</label>
 <input type="date" id="shiftDate" onchange="shiftDateManuallyChanged()">
@@ -209,17 +236,6 @@
     </div>
 </div>
 
-<div class="checkbox-row">
-    <input
-        type="checkbox"
-        id="useQuarterHour"
-        onchange="timeRoundingChanged()"
-    >
-    <label for="useQuarterHour">
-        Use 15-minute increments
-    </label>
-</div>
-
 <button class="now-button" id="nowButton" onclick="setEndToNow()">
     Set End Time to NOW (Rounded 30m)
 </button>
@@ -232,20 +248,46 @@
     onclick="this.select()"
 >
 
-<div class="checkbox-row">
-    <input type="checkbox" id="usePreviousOdometer">
-    <label for="usePreviousOdometer">
-        Include Miles Driven
-    </label>
-</div>
-
-<label for="odometer">Ending Odometer:</label>
+<label for="odometer">Ending Odometer: <span class="label-hint">(enter 0 for no odometer)</span></label>
 <input
     type="number"
     id="odometer"
     inputmode="numeric"
     onclick="this.select()"
 >
+
+<details>
+    <summary>Shift Options</summary>
+
+    <label for="breakMins">Unpaid Break:</label>
+    <select id="breakMins">
+        <option value="0">None</option>
+        <option value="15">15 mins</option>
+        <option value="30">30 mins</option>
+        <option value="45">45 mins</option>
+        <option value="60">60 mins (1 hr)</option>
+        <option value="90">90 mins (1.5 hrs)</option>
+        <option value="120">120 mins (2 hrs)</option>
+    </select>
+
+    <div class="checkbox-row">
+        <input type="checkbox" id="usePreviousOdometer">
+        <label for="usePreviousOdometer">
+            Include Miles Driven
+        </label>
+    </div>
+
+    <div class="checkbox-row">
+        <input
+            type="checkbox"
+            id="useQuarterHour"
+            onchange="timeRoundingChanged()"
+        >
+        <label for="useQuarterHour">
+            Use 15-minute increments
+        </label>
+    </div>
+</details>
 
 <button class="primary" onclick="generateLog()">
     Generate & Copy Log
@@ -308,6 +350,11 @@ function getProfiles() {
             if (!("useQuarterHour" in profile)) {
                 profile.useQuarterHour = false;
             }
+
+            // Compatibility fallback if transitioning from hwy -> location
+            if (!("location" in profile) && ("hwy" in profile)) {
+                profile.location = profile.hwy;
+            }
         });
 
         return profiles;
@@ -358,7 +405,7 @@ function loadSelectedProfile() {
 
     document.getElementById("jobNum").value = profile.jobNum || "";
     document.getElementById("fedProject").value = profile.fedProject || "";
-    document.getElementById("location").value = profile.location || "";
+    document.getElementById("location").value = profile.location || profile.hwy || "";
     document.getElementById("payItem").value = profile.payItem || "";
     document.getElementById("truck").value = profile.truck || "";
 
@@ -393,14 +440,12 @@ function createNewBlankProfile() {
     const select = document.getElementById("profileSelect");
 
     let newOption = select.querySelector('option[value="new"]');
-
     if (!newOption) {
         newOption = document.createElement("option");
         newOption.value = "new";
         newOption.textContent = "-- Unsaved New Profile --";
         select.appendChild(newOption);
     }
-
     newOption.selected = true;
     select.value = "new";
 
@@ -424,6 +469,7 @@ function createNewBlankProfile() {
 
     updateNowButtonText();
 
+    document.getElementById("jobDetailsPanel").open = true;
     document.getElementById("jobNum").focus();
 }
 
@@ -435,6 +481,7 @@ function createNewBlankProfile() {
 function saveProfile() {
     const profiles = getProfiles();
     const select = document.getElementById("profileSelect");
+
     let selectedIndex = select.value === "new" ? -1 : Number(select.value);
     let existingProfile = profiles[selectedIndex];
 
@@ -447,7 +494,28 @@ function saveProfile() {
         profileName = existingProfile.name;
 
     } else {
-        profileName = prompt("Enter a name for this profile:");
+        const locVal = document.getElementById("location").value.trim();
+        const jobVal = document.getElementById("jobNum").value.trim();
+        const payVal = document.getElementById("payItem").value.trim();
+        const truckVal = document.getElementById("truck").value.trim();
+
+        let defaultName = "";
+
+        if (locVal && jobVal) {
+            defaultName = `${locVal} (${jobVal})`;
+        } else if (locVal) {
+            defaultName = locVal;
+        } else if (jobVal) {
+            defaultName = `Job ${jobVal}`;
+        } else if (payVal) {
+            defaultName = `Pay Item ${payVal}`;
+        } else if (truckVal) {
+            defaultName = truckVal;
+        } else {
+            defaultName = "Plant Day";
+        }
+
+        profileName = prompt("Enter a name for this profile:", defaultName);
 
         if (!profileName) return;
     }
@@ -496,7 +564,6 @@ function saveProfile() {
 ----------------------------- */
 
 function deleteProfile() {
-    const profiles = getProfiles();
     const select = document.getElementById("profileSelect");
 
     if (select.value === "new") {
@@ -505,6 +572,7 @@ function deleteProfile() {
         return;
     }
 
+    const profiles = getProfiles();
     const index = Number(select.value);
 
     if (!profiles[index]) return;
@@ -878,7 +946,7 @@ function generateLog() {
     const fedProject =
         document.getElementById("fedProject").value.trim();
 
-    const location =
+    const locationVal =
         document.getElementById("location").value.trim();
 
     const payItem =
@@ -892,6 +960,9 @@ function generateLog() {
 
     const endTime =
         document.getElementById("endTime").value;
+
+    const breakMins =
+        Number(document.getElementById("breakMins").value);
 
     const shiftDateValue =
         document.getElementById("shiftDate").value;
@@ -922,8 +993,8 @@ function generateLog() {
         return;
     }
 
-    if (!odometer) {
-        alert("Please enter the Ending Odometer.");
+    if (odometer === "") {
+        alert("Please enter the Ending Odometer (or enter 0 for personal vehicle).");
         document.getElementById("odometer").focus();
         return;
     }
@@ -941,7 +1012,7 @@ function generateLog() {
 
     let milesDriven = null;
 
-    if (usePreviousOdometer) {
+    if (usePreviousOdometer && odometer !== "0") {
 
         if (!previousOdometer) {
             alert(
@@ -1020,11 +1091,11 @@ function generateLog() {
 
 
     /* -----------------------------
-       STANDARD CLOCK FACE
-       CALCULATION
+       CALCULATION WITH UNPAID BREAK
     ----------------------------- */
 
-    let totalHours = (end - start) / (1000 * 60 * 60);
+    let totalHours = ((end - start) / (1000 * 60 * 60)) - (breakMins / 60);
+    if (totalHours < 0) totalHours = 0;
 
 
     /* -----------------------------
@@ -1086,15 +1157,20 @@ function generateLog() {
         }
     }
 
+
     /* -----------------------------
-       SHIFT LENGTH WARNING
+       LONG SHIFT WARNING
     ----------------------------- */
 
     if (totalHours < 4 || totalHours > 16) {
+
         const proceed = confirm(
-            "This shift calculates to " + totalHours + " hours.\n\n" +
+            "This shift calculates to " +
+            totalHours +
+            " hours.\n\n" +
             "Are you sure the start and end times are correct?"
         );
+
         if (!proceed) return;
     }
 
@@ -1113,8 +1189,8 @@ function generateLog() {
         lines.push(fedProject);
     }
 
-    if (location) {
-        lines.push(location);
+    if (locationVal) {
+        lines.push(locationVal);
     }
 
     if (payItem) {
@@ -1137,16 +1213,16 @@ function generateLog() {
         dstNote
     );
 
-    lines.push(
-        "Odometer: " +
-        odometer
-    );
+    if (breakMins > 0) {
+        lines.push("Break: " + breakMins + "m unpaid");
+    }
 
-    if (usePreviousOdometer) {
-        lines.push(
-            "Miles: " +
-            milesDriven
-        );
+    if (odometer !== "0") {
+        lines.push("Odometer: " + odometer);
+    }
+
+    if (usePreviousOdometer && milesDriven !== null) {
+        lines.push("Miles: " + milesDriven);
     }
 
     if (truck) {
@@ -1161,9 +1237,9 @@ function generateLog() {
 
     copyText(output);
 
-    updateProfilePreviousOdometer(
-        odometer
-    );
+    if (odometer !== "0") {
+        updateProfilePreviousOdometer(odometer);
+    }
 }
 
 
@@ -1174,12 +1250,12 @@ function generateLog() {
 
 function updateProfilePreviousOdometer(odometer) {
 
-    const profiles = getProfiles();
-
     const select =
         document.getElementById("profileSelect");
 
     if (select.value === "new") return;
+
+    const profiles = getProfiles();
 
     const index =
         Number(select.value);
