@@ -9,6 +9,9 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1e1e1e">
 
+<!-- Local Offline Tesseract Engine -->
+<script src="./tesseract.min.js"></script>
+
 <style>
     * {
         box-sizing: border-box;
@@ -91,6 +94,31 @@
 
     .two-column > div {
         flex: 1;
+    }
+
+    .odometer-row {
+        display: flex;
+        gap: 6px;
+        align-items: flex-end;
+    }
+
+    .odometer-row > div {
+        flex: 1;
+    }
+
+    .scan-button {
+        width: auto;
+        white-space: nowrap;
+        padding: 6px 10px;
+        background: #007acc;
+        color: white;
+        font-weight: bold;
+        margin-top: 0;
+        height: 33px;
+    }
+
+    .scan-button:active {
+        background: #005999;
     }
 
     .profile-buttons {
@@ -224,6 +252,13 @@
         font-size: 12px;
         margin-left: 4px;
     }
+
+    #ocr-status {
+        font-size: 11px;
+        color: #aaa;
+        margin-top: 2px;
+        display: block;
+    }
 </style>
 </head>
 
@@ -298,13 +333,20 @@
     >
 </div>
 
-<label for="odometer">Ending Odometer: <span class="label-hint">(0 for none)</span></label>
-<input
-    type="number"
-    id="odometer"
-    inputmode="numeric"
-    onclick="this.select()"
->
+<div class="odometer-row">
+    <div>
+        <label for="odometer">Ending Odometer: <span class="label-hint">(0 for none)</span></label>
+        <input
+            type="number"
+            id="odometer"
+            inputmode="numeric"
+            onclick="this.select()"
+        >
+    </div>
+    <button type="button" class="scan-button" id="scanBtn">📷 Scan</button>
+    <input type="file" id="ocrCameraInput" accept="image/*" capture="environment" style="display: none;">
+</div>
+<span id="ocr-status"></span>
 
 <details id="shiftOptionsPanel">
     <summary>Shift Options</summary>
@@ -359,6 +401,49 @@ const defaultProfile = {
     usePreviousOdometer: false,
     useQuarterHour: false
 };
+
+// Odometer OCR Trigger Handling
+document.getElementById('scanBtn').addEventListener('click', () => {
+    document.getElementById('ocrCameraInput').click();
+});
+
+document.getElementById('ocrCameraInput').addEventListener('change', async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const statusEl = document.getElementById('ocr-status');
+
+    try {
+        statusEl.textContent = "Loading offline engine...";
+
+        // Initialize Tesseract using local offline files
+        const worker = await Tesseract.createWorker('eng', 1, {
+            workerPath: './worker.min.js',
+            corePath: './tesseract-core-simd.wasm',
+            langPath: './'
+        });
+
+        statusEl.textContent = "Scanning odometer...";
+        const result = await worker.recognize(file);
+
+        // Extract numbers 4 to 7 digits long
+        const matches = result.data.text.match(/\b\d{4,7}\b/);
+
+        if (matches && matches[0]) {
+            document.getElementById('odometer').value = matches[0];
+            statusEl.textContent = `Scanned: ${matches[0]}`;
+        } else {
+            statusEl.textContent = "No odometer sequence detected.";
+        }
+
+        await worker.terminate();
+    } catch (err) {
+        console.error(err);
+        statusEl.textContent = "Scan failed. Enter manually.";
+    } finally {
+        event.target.value = '';
+    }
+});
 
 function togglePreviousOdometer() {
     const isChecked = document.getElementById("usePreviousOdometer").checked;
