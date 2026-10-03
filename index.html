@@ -784,18 +784,26 @@ function generateLog() {
     if (totalHours < 0) totalHours = 0;
 
     let dstNote = "";
-    if (start.getTimezoneOffset() !== end.getTimezoneOffset()) {
-        const suggested = start.getTimezoneOffset() > end.getTimezoneOffset() ? "+1 hour (Spring Forward)" : "-1 hour (Fall Back)";
-        const choice = prompt(
-            "Daylight Saving Time change detected.\n\nCalculated Hours: " + totalHours +
-            "\n\nSuggested change: " + suggested +
-            "\n\nChoose:\nK = Keep calculated hours\nA = Add 1 hour\nS = Subtract 1 hour", "K"
-        );
-        const selection = (choice || "K").trim().toUpperCase();
-        if (selection === "A") { totalHours += 1; dstNote = " (DST reviewed: +1 hr applied)"; }
-        else if (selection === "S") { totalHours = Math.max(0, totalHours - 1); dstNote = " (DST reviewed: -1 hr applied)"; }
-        else { dstNote = " (DST reviewed: no adjustment)"; }
+if (start.getTimezoneOffset() !== end.getTimezoneOffset()) {
+    // start > end means offset got smaller -> Spring Forward -> lost 1 hour of physical work
+    const isSpringForward = start.getTimezoneOffset() > end.getTimezoneOffset();
+    const adjustmentAmount = isSpringForward ? -1 : 1;
+    const adjustmentLabel = isSpringForward ? "-1 hour (Spring Forward)" : "+1 hour (Fall Back)";
+
+    const applyAdjustment = confirm(
+        "Daylight Saving Time change detected.\n\n" +
+        "Calculated Hours (Raw): " + totalHours + "\n\n" +
+        "Click OK to apply detected adjustment [" + adjustmentLabel + "]\n" +
+        "Click Cancel to keep raw calculated hours."
+    );
+
+    if (applyAdjustment) {
+        totalHours = Math.max(0, totalHours + adjustmentAmount);
+        dstNote = " (DST adjusted: " + (isSpringForward ? "-1 hr" : "+1 hr") + ")";
+    } else {
+        dstNote = " (DST reviewed: no adjustment)";
     }
+}
 
     if (totalHours < 4 || totalHours > 16) {
         if (!confirm("This shift calculates to " + totalHours + " hours.\n\nAre you sure the start and end times are correct?")) return;
