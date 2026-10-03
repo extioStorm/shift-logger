@@ -347,6 +347,9 @@ function renderProfiles() {
 
 function loadSelectedProfile() {
     const select = document.getElementById("profileSelect");
+
+    if (select.value === "new") return;
+
     const profiles = getProfiles();
     const index = Number(select.value);
 
@@ -390,6 +393,20 @@ function loadSelectedProfile() {
 ----------------------------- */
 
 function createNewBlankProfile() {
+    const select = document.getElementById("profileSelect");
+
+    let newOption = select.querySelector('option[value="new"]');
+
+    if (!newOption) {
+        newOption = document.createElement("option");
+        newOption.value = "new";
+        newOption.textContent = "-- Unsaved New Profile --";
+        select.appendChild(newOption);
+    }
+
+    newOption.selected = true;
+    select.value = "new";
+
     document.getElementById("jobNum").value = "";
     document.getElementById("fedProject").value = "";
     document.getElementById("hwy").value = "";
@@ -421,8 +438,8 @@ function createNewBlankProfile() {
 function saveProfile() {
     const profiles = getProfiles();
     const select = document.getElementById("profileSelect");
-    const selectedIndex = Number(select.value);
-    const existingProfile = profiles[selectedIndex];
+    let selectedIndex = select.value === "new" ? -1 : Number(select.value);
+    let existingProfile = profiles[selectedIndex];
 
     let profileName;
 
@@ -484,6 +501,13 @@ function saveProfile() {
 function deleteProfile() {
     const profiles = getProfiles();
     const select = document.getElementById("profileSelect");
+
+    if (select.value === "new") {
+        renderProfiles();
+        loadSelectedProfile();
+        return;
+    }
+
     const index = Number(select.value);
 
     if (!profiles[index]) return;
@@ -1135,6 +1159,8 @@ function updateProfilePreviousOdometer(odometer) {
 
     const select =
         document.getElementById("profileSelect");
+
+    if (select.value === "new") return;
 
     const index =
         Number(select.value);
