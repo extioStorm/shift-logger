@@ -1,157 +1,158 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Shift Logger</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shift Logger</title>
 
-<link rel="icon" type="image/png" sizes="48x48" href="shift-logger-favicon-48.png">
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#1e1e1e">
+    <link rel="icon" type="image/png" sizes="48x48" href="shift-logger-favicon-48.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1e1e1e">
 
-<style>
-    body {
-        font-family: Arial, sans-serif;
-        background: #1e1e1e;
-        color: #f0f0f0;
-        margin: 0;
-        padding: 15px;
-    }
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1e1e1e;
+            color: #f0f0f0;
+            margin: 0;
+            padding: 15px;
+        }
 
-    .container {
-        max-width: 500px;
-        margin: auto;
-    }
+        .container {
+            max-width: 500px;
+            margin: auto;
+        }
 
-    h2 {
-        text-align: center;
-        color: #66ff99;
-        margin-top: 5px;
-    }
+        h2 {
+            text-align: center;
+            color: #66ff99;
+            margin-top: 5px;
+        }
 
-    label {
-        display: block;
-        margin-top: 12px;
-        margin-bottom: 4px;
-        font-weight: bold;
-    }
+        label {
+            display: block;
+            margin-top: 12px;
+            margin-bottom: 4px;
+            font-weight: bold;
+        }
 
-    input,
-    select,
-    textarea,
-    button {
-        box-sizing: border-box;
-        font-size: 16px;
-    }
+        input,
+        select,
+        textarea,
+        button {
+            box-sizing: border-box;
+            font-size: 16px;
+        }
 
-    input,
-    select,
-    textarea {
-        width: 100%;
-        padding: 10px;
-        border: 1px solid #555;
-        border-radius: 5px;
-        background: #2b2b2b;
-        color: #fff;
-    }
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #555;
+            border-radius: 5px;
+            background: #2b2b2b;
+            color: #fff;
+        }
 
-    button {
-        padding: 12px;
-        margin-top: 8px;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-    }
+        button {
+            padding: 12px;
+            margin-top: 8px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
 
-    .profile-row {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-    }
+        .profile-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
 
-    .profile-row select {
-        flex: 1;
-    }
+        .profile-row select {
+            flex: 1;
+        }
 
-    .small-button {
-        width: auto;
-        white-space: nowrap;
-    }
+        .small-button {
+            width: auto;
+            white-space: nowrap;
+        }
 
-    .two-column {
-        display: flex;
-        gap: 8px;
-    }
+        .two-column {
+            display: flex;
+            gap: 8px;
+        }
 
-    .two-column > div {
-        flex: 1;
-    }
+        .two-column > div {
+            flex: 1;
+        }
 
-    .profile-buttons {
-        display: flex;
-        gap: 8px;
-    }
+        .profile-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
 
-    .profile-buttons button {
-        flex: 1;
-    }
+        .profile-buttons button {
+            flex: 1;
+        }
 
-    .checkbox-row {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-top: 8px;
-        color: #66ff99;
-    }
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+            color: #66ff99;
+        }
 
-    .checkbox-row input[type="checkbox"] {
-        width: auto;
-        margin: 0;
-        transform: scale(1.25);
-    }
+        .checkbox-row input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+            transform: scale(1.25);
+        }
 
-    .checkbox-row label {
-        margin: 0;
-        color: #66ff99;
-        font-weight: normal;
-    }
+        .checkbox-row label {
+            margin: 0;
+            color: #66ff99;
+            font-weight: normal;
+        }
 
-    textarea {
-        min-height: 170px;
-        resize: vertical;
-        margin-top: 8px;
-    }
+        textarea {
+            min-height: 170px;
+            resize: vertical;
+            margin-top: 8px;
+        }
 
-    .primary {
-        width: 100%;
-        background: #168a45;
-        color: white;
-        font-weight: bold;
-        padding: 14px;
-    }
+        .primary {
+            width: 100%;
+            background: #168a45;
+            color: white;
+            font-weight: bold;
+            padding: 14px;
+            margin-top: 15px;
+        }
 
-    .secondary {
-        background: #444;
-        color: white;
-    }
+        .secondary {
+            background: #444;
+            color: white;
+        }
 
-    .danger {
-        background: #8b2020;
-        color: white;
-    }
+        .danger {
+            background: #8b2020;
+            color: white;
+        }
 
-    .now-button {
-        width: 100%;
-        background: #444;
-        color: #66ff99;
-    }
+        .now-button {
+            width: 100%;
+            background: #444;
+            color: #66ff99;
+        }
 
-    .output-label {
-        margin-top: 15px;
-        color: #66ff99;
-    }
-</style>
+        .output-label {
+            margin-top: 15px;
+            color: #66ff99;
+        }
+    </style>
 </head>
 
 <body>
@@ -174,17 +175,15 @@
 <input type="text" id="fedProject">
 
 <div class="two-column">
-
     <div>
-        <label for="hwy">Location/Hwy:</label>
-        <input type="text" id="hwy">
+        <label for="location">Location:</label>
+        <input type="text" id="location">
     </div>
 
     <div>
         <label for="payItem">Pay Item / Code:</label>
         <input type="text" id="payItem">
     </div>
-
 </div>
 
 <label for="truck">Vehicle / Notes:</label>
@@ -199,7 +198,6 @@
 <input type="date" id="shiftDate" onchange="shiftDateManuallyChanged()">
 
 <div class="two-column">
-
     <div>
         <label for="startTime">Start Time:</label>
         <select id="startTime" onchange="updateAutomaticShiftDate()"></select>
@@ -209,7 +207,6 @@
         <label for="endTime">End Time:</label>
         <select id="endTime" onchange="updateAutomaticShiftDate()"></select>
     </div>
-
 </div>
 
 <div class="checkbox-row">
@@ -270,11 +267,11 @@ const defaultProfile = {
     name: "Hwy 31 (362304)",
     jobNum: "362304",
     fedProject: "",
-    hwy: "Hwy 31",
+    location: "Hwy 31",
     payItem: "424A360",
     truck: "Silver truck",
-    startTime: "19:00",
-    endTime: "06:30",
+    startTime: "--",
+    endTime: "--",
     previousOdometer: "",
     usePreviousOdometer: false,
     useQuarterHour: false
@@ -361,7 +358,7 @@ function loadSelectedProfile() {
 
     document.getElementById("jobNum").value = profile.jobNum || "";
     document.getElementById("fedProject").value = profile.fedProject || "";
-    document.getElementById("hwy").value = profile.hwy || "";
+    document.getElementById("location").value = profile.location || "";
     document.getElementById("payItem").value = profile.payItem || "";
     document.getElementById("truck").value = profile.truck || "";
 
@@ -377,10 +374,10 @@ function loadSelectedProfile() {
     populateTimes(profile.useQuarterHour === true);
 
     document.getElementById("startTime").value =
-        profile.startTime || "19:00";
+        profile.startTime || "--";
 
     document.getElementById("endTime").value =
-        profile.endTime || "06:30";
+        profile.endTime || "--";
 
     updateNowButtonText();
 
@@ -409,15 +406,15 @@ function createNewBlankProfile() {
 
     document.getElementById("jobNum").value = "";
     document.getElementById("fedProject").value = "";
-    document.getElementById("hwy").value = "";
+    document.getElementById("location").value = "";
     document.getElementById("payItem").value = "";
     document.getElementById("truck").value = "";
 
     document.getElementById("useQuarterHour").checked = false;
     populateTimes(false);
 
-    document.getElementById("startTime").value = "19:00";
-    document.getElementById("endTime").value = "06:30";
+    document.getElementById("startTime").value = "--";
+    document.getElementById("endTime").value = "--";
 
     document.getElementById("previousOdometer").value = "";
     document.getElementById("usePreviousOdometer").checked = false;
@@ -459,7 +456,7 @@ function saveProfile() {
         name: profileName,
         jobNum: document.getElementById("jobNum").value.trim(),
         fedProject: document.getElementById("fedProject").value.trim(),
-        hwy: document.getElementById("hwy").value.trim(),
+        location: document.getElementById("location").value.trim(),
         payItem: document.getElementById("payItem").value.trim(),
         truck: document.getElementById("truck").value.trim(),
         startTime: document.getElementById("startTime").value,
@@ -773,7 +770,7 @@ function setEndToNow() {
         document.getElementById("shiftDate").value = yyyy + "-" + mm + "-" + dd;
     }
 }
-  
+
 /* -----------------------------
    DATE FORMATTING
 ----------------------------- */
@@ -859,8 +856,8 @@ function generateLog() {
     const fedProject =
         document.getElementById("fedProject").value.trim();
 
-    const hwy =
-        document.getElementById("hwy").value.trim();
+    const location =
+        document.getElementById("location").value.trim();
 
     const payItem =
         document.getElementById("payItem").value.trim();
@@ -1068,16 +1065,17 @@ function generateLog() {
     }
 
 
-// --------------------------------------------------
-// Combined Shift Length Warning
-// --------------------------------------------------
-if (totalHours < 4 || totalHours > 16) {
-    const proceed = confirm(
-        "This shift calculates to " + totalHours + " hours.\n\n" +
-        "Are you sure the start and end times are correct?"
-    );
-    if (!proceed) return;
-}
+    /* -----------------------------
+       SHIFT LENGTH WARNING
+    ----------------------------- */
+
+    if (totalHours < 4 || totalHours > 16) {
+        const proceed = confirm(
+            "This shift calculates to " + totalHours + " hours.\n\n" +
+            "Are you sure the start and end times are correct?"
+        );
+        if (!proceed) return;
+    }
 
 
     /* -----------------------------
@@ -1094,8 +1092,8 @@ if (totalHours < 4 || totalHours > 16) {
         lines.push(fedProject);
     }
 
-    if (hwy) {
-        lines.push(hwy);
+    if (location) {
+        lines.push(location);
     }
 
     if (payItem) {
