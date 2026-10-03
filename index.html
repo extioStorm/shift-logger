@@ -226,14 +226,21 @@
         color: white;
     }
 
+    /* Option A Styling: Distinct Emerald Accent */
     .now-button {
         width: 100%;
-        background: #168a45;
-        color: white;
+        background: #10b981;
+        color: #121212;
         font-weight: bold;
         padding: 10px;
         font-size: 15px;
         margin-top: 6px;
+        border: none;
+        border-radius: 4px;
+    }
+
+    .now-button:active {
+        background: #059669;
     }
 
     .output-label {
@@ -449,11 +456,6 @@ function getProfiles() {
             if (!("previousOdometer" in profile)) profile.previousOdometer = "";
             if (!("usePreviousOdometer" in profile)) profile.usePreviousOdometer = false;
 
-            /*
-             * Backward compatibility:
-             * Older profiles used usePreviousOdometer for both
-             * showing the field and including miles.
-             */
             if (!("showPreviousOdometer" in profile)) {
                 profile.showPreviousOdometer = profile.usePreviousOdometer === true;
             }
@@ -631,8 +633,6 @@ function saveProfile() {
 
         showPreviousOdometer: showPreviousOdometer,
         includeMilesDriven: includeMilesDriven,
-
-        // Retain the old field for compatibility with older versions.
         usePreviousOdometer: includeMilesDriven,
 
         useQuarterHour: document.getElementById("useQuarterHour").checked,
@@ -1068,7 +1068,6 @@ function generateLog() {
         end.setDate(end.getDate() + 1);
     }
 
-    // Pure wall-clock minute calculation (timezone-agnostic)
     let startTotalMins =
         startHour * 60 + startMinute;
 
