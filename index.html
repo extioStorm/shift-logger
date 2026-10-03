@@ -268,6 +268,9 @@
     </div>
 </details>
 
+<label for="shiftDate">Start Date of Shift:</label>
+<input type="date" id="shiftDate" onchange="shiftDateManuallyChanged()">
+
 <div class="two-column" style="margin-top: 4px;">
     <div>
         <label for="startTime">Start Time:</label>
@@ -284,6 +287,17 @@
     Set End Time to NOW (Rounded 30m)
 </button>
 
+<!-- Previous Odometer dynamically hidden/shown based on 'Include Miles Driven' check -->
+<div id="previousOdometerGroup" style="display: none;">
+    <label for="previousOdometer">Previous Odometer:</label>
+    <input
+        type="number"
+        id="previousOdometer"
+        inputmode="numeric"
+        onclick="this.select()"
+    >
+</div>
+
 <label for="odometer">Ending Odometer: <span class="label-hint">(0 for none)</span></label>
 <input
     type="number"
@@ -294,9 +308,6 @@
 
 <details id="shiftOptionsPanel">
     <summary>Shift Options</summary>
-
-    <label for="shiftDate">Start Date of Shift:</label>
-    <input type="date" id="shiftDate" onchange="shiftDateManuallyChanged()">
 
     <label for="breakMins">Unpaid Break:</label>
     <select id="breakMins">
@@ -312,16 +323,6 @@
     <div class="checkbox-row" style="width: 100%; margin: 6px 0 0 0;">
         <input type="checkbox" id="usePreviousOdometer" onchange="togglePreviousOdometer()">
         <label for="usePreviousOdometer">Include Miles Driven</label>
-    </div>
-
-    <div id="previousOdometerGroup" style="display: none; width: 100%; margin: 0;">
-        <label for="previousOdometer">Previous Odometer:</label>
-        <input
-            type="number"
-            id="previousOdometer"
-            inputmode="numeric"
-            onclick="this.select()"
-        >
     </div>
 
     <div class="checkbox-row" style="width: 100%; margin: 6px 0 0 0;">
