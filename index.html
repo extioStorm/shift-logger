@@ -263,10 +263,6 @@
 
 <h2>Shift Logger</h2>
 
-<button id="installButton" class="secondary" style="display:none; width:100%; margin-top:6px;" onclick="installApp()">
-    📲 Install App
-</button>
-
 <div class="profile-row">
     <select id="profileSelect" onchange="loadSelectedProfile()"></select>
     <button class="small-button secondary" onclick="createNewBlankProfile()">+ New</button>
@@ -378,7 +374,7 @@
         </div>
     </div>
 
-    <button type="button" class="secondary" style="width: 100%; margin-top: 8px;" onclick="saveProfile()">Save Settings &amp; Profile</button>
+    <button type="button" class="secondary" style="width: 80%; margin: 8px auto 0; display: block; padding: 6px 8px; font-size: 14px;" onclick="saveProfile()">Save Settings &amp; Profile</button>
 </details>
 
 <button class="primary" onclick="generateLog()">
@@ -387,6 +383,10 @@
 
 <label class="output-label" for="output">Output:</label>
 <textarea id="output" readonly></textarea>
+
+<button id="installButton" class="secondary" style="display:none; width:100%; margin-top:10px;" onclick="installApp()">
+    📲 Install App
+</button>
 
 </div>
 
