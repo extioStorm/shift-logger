@@ -263,6 +263,10 @@
 
 <h2>Shift Logger</h2>
 
+<button id="installButton" class="secondary" style="display:none; width:100%; margin-top:6px;" onclick="installApp()">
+    📲 Install App
+</button>
+
 <div class="profile-row">
     <select id="profileSelect" onchange="loadSelectedProfile()"></select>
     <button class="small-button secondary" onclick="createNewBlankProfile()">+ New</button>
@@ -391,6 +395,37 @@ const STORAGE_KEY = "shift_profiles";
 const LAST_PROFILE_KEY = "last_active_profile";
 
 let shiftDateWasManuallyChanged = false;
+
+// ─── PWA Install Prompt ───────────────────────────────────────────────
+let deferredPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    document.getElementById('installButton').style.display = 'block';
+});
+
+window.addEventListener('appinstalled', () => {
+    document.getElementById('installButton').style.display = 'none';
+    deferredPrompt = null;
+});
+
+function installApp() {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(() => {
+        deferredPrompt = null;
+        document.getElementById('installButton').style.display = 'none';
+    });
+}
+
+// Register the service worker
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+            .catch(err => console.log('SW registration failed:', err));
+    });
+}
 
 const defaultProfile = {
     name: "Plant Day",
