@@ -764,10 +764,31 @@ function setEndToNow() {
     document.getElementById("endTime").value = value;
 
     if (!shiftDateWasManuallyChanged) {
-        const yyyy = now.getFullYear();
-        const mm = String(now.getMonth() + 1).padStart(2, "0");
-        const dd = String(now.getDate()).padStart(2, "0");
-        document.getElementById("shiftDate").value = yyyy + "-" + mm + "-" + dd;
+        const startVal =
+            document.getElementById("startTime").value;
+
+        const targetDate = new Date(now);
+
+        if (startVal && startVal !== "--") {
+            const startParts = startVal.split(":");
+            const startMinutes =
+                Number(startParts[0]) * 60 +
+                Number(startParts[1]);
+
+            const endMinutes =
+                hour * 60 + minute;
+
+            if (endMinutes < startMinutes) {
+                targetDate.setDate(targetDate.getDate() - 1);
+            }
+        }
+
+        const yyyy = targetDate.getFullYear();
+        const mm = String(targetDate.getMonth() + 1).padStart(2, "0");
+        const dd = String(targetDate.getDate()).padStart(2, "0");
+
+        document.getElementById("shiftDate").value =
+            yyyy + "-" + mm + "-" + dd;
     }
 }
 
@@ -1016,18 +1037,18 @@ function generateLog() {
         start.getTimezoneOffset() !==
         end.getTimezoneOffset();
 
-    if (crossedDST) {
+if (crossedDST) {
 
         const suggestedAdjustment =
             start.getTimezoneOffset() > end.getTimezoneOffset()
-                ? "-1 hour (Spring Forward)"
-                : "+1 hour (Fall Back)";
+                ? "+1 hour (Spring Forward)"
+                : "-1 hour (Fall Back)";
 
         const choice = prompt(
             "Daylight Saving Time change detected.\n\n" +
             "Calculated Hours: " + totalHours + "\n\n" +
             "Depending on how the times were recorded,\n" +
-            "the shift may need a DST adjustment.\n\n" +
+            "the shift may need a DST adjustment to match clock face hours.\n\n" +
             "Suggested change: " + suggestedAdjustment + "\n\n" +
             "Choose:\n" +
             "K = Keep calculated hours\n" +
@@ -1063,7 +1084,6 @@ function generateLog() {
                 " (DST reviewed: no adjustment)";
         }
     }
-
 
     /* -----------------------------
        SHIFT LENGTH WARNING
