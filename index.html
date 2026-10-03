@@ -124,6 +124,27 @@
         font-weight: normal;
     }
 
+    .checkbox-row input[type="checkbox"]:disabled {
+        opacity: 0.45;
+    }
+
+    .checkbox-row input[type="checkbox"]:disabled + label {
+        color: #666;
+    }
+
+    .options-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        column-gap: 12px;
+        row-gap: 2px;
+        width: 100%;
+        margin-top: 6px;
+    }
+
+    .options-grid .checkbox-row {
+        margin-top: 0;
+    }
+
     /* Thin Bar Collapsible Panels */
     details {
         background: #252525;
@@ -283,11 +304,24 @@
     </div>
 </div>
 
+<div id="unpaidBreakGroup" style="display: none;">
+    <label for="breakMins">Unpaid Break:</label>
+    <select id="breakMins">
+        <option value="0">None</option>
+        <option value="15">15 mins</option>
+        <option value="30">30 mins</option>
+        <option value="45">45 mins</option>
+        <option value="60">60 mins (1 hr)</option>
+        <option value="90">90 mins (1.5 hrs)</option>
+        <option value="120">120 mins (2 hrs)</option>
+    </select>
+</div>
+
 <button class="now-button" id="nowButton" onclick="setEndToNow()">
     Set End Time to NOW (Rounded 30m)
 </button>
 
-<!-- Previous Odometer dynamically hidden/shown based on 'Include Miles Driven' check -->
+<!-- Previous Odometer dynamically hidden/shown based on 'Show Previous Odometer' check -->
 <div id="previousOdometerGroup" style="display: none;">
     <label for="previousOdometer">Previous Odometer:</label>
     <input
@@ -309,25 +343,26 @@
 <details id="shiftOptionsPanel">
     <summary>Shift Options</summary>
 
-    <label for="breakMins">Unpaid Break:</label>
-    <select id="breakMins">
-        <option value="0">None</option>
-        <option value="15">15 mins</option>
-        <option value="30">30 mins</option>
-        <option value="45">45 mins</option>
-        <option value="60">60 mins (1 hr)</option>
-        <option value="90">90 mins (1.5 hrs)</option>
-        <option value="120">120 mins (2 hrs)</option>
-    </select>
+    <div class="options-grid">
+        <div class="checkbox-row">
+            <input type="checkbox" id="showPreviousOdometer" onchange="togglePreviousOdometer()">
+            <label for="showPreviousOdometer">Show Previous Odometer</label>
+        </div>
 
-    <div class="checkbox-row" style="width: 100%; margin: 6px 0 0 0;">
-        <input type="checkbox" id="usePreviousOdometer" onchange="togglePreviousOdometer()">
-        <label for="usePreviousOdometer">Include Miles Driven</label>
-    </div>
+        <div class="checkbox-row">
+            <input type="checkbox" id="includeMilesDriven" onchange="toggleIncludeMilesDriven()" disabled>
+            <label for="includeMilesDriven">Include Driven Miles</label>
+        </div>
 
-    <div class="checkbox-row" style="width: 100%; margin: 6px 0 0 0;">
-        <input type="checkbox" id="useQuarterHour" onchange="timeRoundingChanged()">
-        <label for="useQuarterHour">Use 15-minute increments</label>
+        <div class="checkbox-row">
+            <input type="checkbox" id="useQuarterHour" onchange="timeRoundingChanged()">
+            <label for="useQuarterHour">Use 15-minute increments</label>
+        </div>
+
+        <div class="checkbox-row">
+            <input type="checkbox" id="showUnpaidBreak" onchange="toggleUnpaidBreak()">
+            <label for="showUnpaidBreak">Show unpaid break</label>
+        </div>
     </div>
 </details>
 
@@ -357,13 +392,45 @@ const defaultProfile = {
     endTime: "--",
     previousOdometer: "",
     usePreviousOdometer: false,
-    useQuarterHour: false
+    showPreviousOdometer: false,
+    includeMilesDriven: false,
+    useQuarterHour: false,
+    showUnpaidBreak: false
 };
 
 function togglePreviousOdometer() {
-    const isChecked = document.getElementById("usePreviousOdometer").checked;
+    const showPrevious = document.getElementById("showPreviousOdometer").checked;
     const group = document.getElementById("previousOdometerGroup");
-    group.style.display = isChecked ? "block" : "none";
+    const includeMiles = document.getElementById("includeMilesDriven");
+
+    group.style.display = showPrevious ? "block" : "none";
+    includeMiles.disabled = !showPrevious;
+
+    if (!showPrevious) {
+        includeMiles.checked = false;
+    }
+}
+
+function toggleIncludeMilesDriven() {
+    const showPrevious = document.getElementById("showPreviousOdometer").checked;
+    const includeMiles = document.getElementById("includeMilesDriven");
+
+    if (!showPrevious) {
+        includeMiles.checked = false;
+        includeMiles.disabled = true;
+    }
+}
+
+function toggleUnpaidBreak() {
+    const showBreak = document.getElementById("showUnpaidBreak").checked;
+    const group = document.getElementById("unpaidBreakGroup");
+    const breakSelect = document.getElementById("breakMins");
+
+    group.style.display = showBreak ? "block" : "none";
+
+    if (!showBreak) {
+        breakSelect.value = "0";
+    }
 }
 
 function getProfiles() {
@@ -377,8 +444,26 @@ function getProfiles() {
         profiles.forEach(profile => {
             if (!("previousOdometer" in profile)) profile.previousOdometer = "";
             if (!("usePreviousOdometer" in profile)) profile.usePreviousOdometer = false;
+
+            /*
+             * Backward compatibility:
+             * Older profiles used usePreviousOdometer for both
+             * showing the field and including miles.
+             */
+            if (!("showPreviousOdometer" in profile)) {
+                profile.showPreviousOdometer = profile.usePreviousOdometer === true;
+            }
+
+            if (!("includeMilesDriven" in profile)) {
+                profile.includeMilesDriven = profile.usePreviousOdometer === true;
+            }
+
             if (!("useQuarterHour" in profile)) profile.useQuarterHour = false;
-            if (!("location" in profile) && ("hwy" in profile)) profile.location = profile.hwy;
+            if (!("showUnpaidBreak" in profile)) profile.showUnpaidBreak = false;
+
+            if (!("location" in profile) && ("hwy" in profile)) {
+                profile.location = profile.hwy;
+            }
         });
 
         return profiles;
@@ -414,16 +499,30 @@ function loadSelectedProfile() {
     if (!profiles[index]) return;
 
     const profile = profiles[index];
+
     document.getElementById("jobNum").value = profile.jobNum || "";
     document.getElementById("fedProject").value = profile.fedProject || "";
     document.getElementById("location").value = profile.location || profile.hwy || "";
     document.getElementById("payItem").value = profile.payItem || "";
     document.getElementById("truck").value = profile.truck || "";
+
     document.getElementById("previousOdometer").value = profile.previousOdometer || "";
-    document.getElementById("usePreviousOdometer").checked = profile.usePreviousOdometer === true;
-    document.getElementById("useQuarterHour").checked = profile.useQuarterHour === true;
+
+    document.getElementById("showPreviousOdometer").checked =
+        profile.showPreviousOdometer === true;
+
+    document.getElementById("includeMilesDriven").checked =
+        profile.includeMilesDriven === true;
+
+    document.getElementById("useQuarterHour").checked =
+        profile.useQuarterHour === true;
+
+    document.getElementById("showUnpaidBreak").checked =
+        profile.showUnpaidBreak === true;
 
     togglePreviousOdometer();
+    toggleUnpaidBreak();
+
     populateTimes(profile.useQuarterHour === true);
 
     document.getElementById("startTime").value = profile.startTime || "--";
@@ -437,12 +536,14 @@ function createNewBlankProfile() {
     const select = document.getElementById("profileSelect");
 
     let newOption = select.querySelector('option[value="new"]');
+
     if (!newOption) {
         newOption = document.createElement("option");
         newOption.value = "new";
         newOption.textContent = "-- Unsaved New Profile --";
         select.appendChild(newOption);
     }
+
     newOption.selected = true;
     select.value = "new";
 
@@ -457,10 +558,16 @@ function createNewBlankProfile() {
 
     document.getElementById("startTime").value = "--";
     document.getElementById("endTime").value = "--";
+
     document.getElementById("previousOdometer").value = "";
-    document.getElementById("usePreviousOdometer").checked = false;
+    document.getElementById("showPreviousOdometer").checked = false;
+    document.getElementById("includeMilesDriven").checked = false;
+
+    document.getElementById("showUnpaidBreak").checked = false;
+    document.getElementById("breakMins").value = "0";
 
     togglePreviousOdometer();
+    toggleUnpaidBreak();
 
     shiftDateWasManuallyChanged = false;
     updateAutomaticShiftDate();
@@ -488,6 +595,7 @@ function saveProfile() {
         const truckVal = document.getElementById("truck").value.trim();
 
         let defaultName = "";
+
         if (locVal && jobVal) defaultName = `${locVal} (${jobVal})`;
         else if (locVal) defaultName = locVal;
         else if (jobVal) defaultName = `Job ${jobVal}`;
@@ -496,8 +604,15 @@ function saveProfile() {
         else defaultName = "Plant Day";
 
         profileName = prompt("Enter a name for this profile:", defaultName);
+
         if (!profileName) return;
     }
+
+    const showPreviousOdometer =
+        document.getElementById("showPreviousOdometer").checked;
+
+    const includeMilesDriven =
+        document.getElementById("includeMilesDriven").checked;
 
     const profile = {
         name: profileName,
@@ -509,17 +624,28 @@ function saveProfile() {
         startTime: document.getElementById("startTime").value,
         endTime: document.getElementById("endTime").value,
         previousOdometer: document.getElementById("previousOdometer").value.trim(),
-        usePreviousOdometer: document.getElementById("usePreviousOdometer").checked,
-        useQuarterHour: document.getElementById("useQuarterHour").checked
+
+        showPreviousOdometer: showPreviousOdometer,
+        includeMilesDriven: includeMilesDriven,
+
+        // Retain the old field for compatibility with older versions.
+        usePreviousOdometer: includeMilesDriven,
+
+        useQuarterHour: document.getElementById("useQuarterHour").checked,
+        showUnpaidBreak: document.getElementById("showUnpaidBreak").checked
     };
 
-    if (existingProfile) profiles[selectedIndex] = profile;
-    else profiles.push(profile);
+    if (existingProfile) {
+        profiles[selectedIndex] = profile;
+    } else {
+        profiles.push(profile);
+    }
 
     saveProfiles(profiles);
     renderProfiles();
 
     const newIndex = existingProfile ? selectedIndex : profiles.length - 1;
+
     document.getElementById("profileSelect").value = String(newIndex);
     localStorage.setItem(LAST_PROFILE_KEY, String(newIndex));
 
@@ -542,7 +668,10 @@ function deleteProfile() {
     if (!confirm("Delete the current profile?")) return;
 
     profiles.splice(index, 1);
-    if (profiles.length === 0) profiles.push(defaultProfile);
+
+    if (profiles.length === 0) {
+        profiles.push(defaultProfile);
+    }
 
     saveProfiles(profiles);
     localStorage.removeItem(LAST_PROFILE_KEY);
@@ -562,18 +691,23 @@ function populateTimes(useQuarterHour) {
     end.innerHTML = "";
 
     const p1 = document.createElement("option");
-    p1.value = "--"; p1.textContent = "--";
+    p1.value = "--";
+    p1.textContent = "--";
     start.appendChild(p1);
 
     const p2 = document.createElement("option");
-    p2.value = "--"; p2.textContent = "--";
+    p2.value = "--";
+    p2.textContent = "--";
     end.appendChild(p2);
 
     const increment = useQuarterHour ? 15 : 30;
 
     for (let hour = 0; hour < 24; hour++) {
         for (let minute = 0; minute < 60; minute += increment) {
-            const value = String(hour).padStart(2, "0") + ":" + String(minute).padStart(2, "0");
+            const value =
+                String(hour).padStart(2, "0") +
+                ":" +
+                String(minute).padStart(2, "0");
 
             const opt1 = document.createElement("option");
             opt1.value = value;
@@ -587,34 +721,51 @@ function populateTimes(useQuarterHour) {
         }
     }
 
-    start.value = Array.from(start.options).some(o => o.value === oldStart) ? oldStart : "--";
-    end.value = Array.from(end.options).some(o => o.value === oldEnd) ? oldEnd : "--";
+    start.value =
+        Array.from(start.options).some(o => o.value === oldStart)
+            ? oldStart
+            : "--";
+
+    end.value =
+        Array.from(end.options).some(o => o.value === oldEnd)
+            ? oldEnd
+            : "--";
 }
 
 function timeRoundingChanged() {
-    const useQuarterHour = document.getElementById("useQuarterHour").checked;
+    const useQuarterHour =
+        document.getElementById("useQuarterHour").checked;
+
     populateTimes(useQuarterHour);
     updateNowButtonText();
     updateAutomaticShiftDate();
 }
 
 function updateNowButtonText() {
-    const useQuarterHour = document.getElementById("useQuarterHour").checked;
-    document.getElementById("nowButton").textContent = 
-        useQuarterHour ? "Set End Time to NOW (Rounded 15m)" : "Set End Time to NOW (Rounded 30m)";
+    const useQuarterHour =
+        document.getElementById("useQuarterHour").checked;
+
+    document.getElementById("nowButton").textContent =
+        useQuarterHour
+            ? "Set End Time to NOW (Rounded 15m)"
+            : "Set End Time to NOW (Rounded 30m)";
 }
 
 function formatTime(timeValue) {
     const parts = timeValue.split(":");
     let hour = Number(parts[0]);
     const minute = parts[1];
+
     const suffix = hour >= 12 ? "PM" : "AM";
+
     hour = hour % 12 || 12;
+
     return hour + ":" + minute + " " + suffix;
 }
 
 function shiftDateManuallyChanged() {
-    shiftDateWasManuallyChanged = !!document.getElementById("shiftDate").value;
+    shiftDateWasManuallyChanged =
+        !!document.getElementById("shiftDate").value;
 }
 
 function updateAutomaticShiftDate() {
@@ -623,69 +774,114 @@ function updateAutomaticShiftDate() {
     const startVal = document.getElementById("startTime").value;
     const endVal = document.getElementById("endTime").value;
 
-    if (!startVal || startVal === "--" || !endVal || endVal === "--") return;
+    if (
+        !startVal ||
+        startVal === "--" ||
+        !endVal ||
+        endVal === "--"
+    ) return;
 
     const startParts = startVal.split(":");
     const endParts = endVal.split(":");
 
-    const startMinutes = Number(startParts[0]) * 60 + Number(startParts[1]);
-    const endMinutes = Number(endParts[0]) * 60 + Number(endParts[1]);
+    const startMinutes =
+        Number(startParts[0]) * 60 + Number(startParts[1]);
+
+    const endMinutes =
+        Number(endParts[0]) * 60 + Number(endParts[1]);
 
     const date = new Date();
-    if (endMinutes < startMinutes) date.setDate(date.getDate() - 1);
+
+    if (endMinutes < startMinutes) {
+        date.setDate(date.getDate() - 1);
+    }
 
     const yyyy = date.getFullYear();
     const mm = String(date.getMonth() + 1).padStart(2, "0");
     const dd = String(date.getDate()).padStart(2, "0");
 
-    document.getElementById("shiftDate").value = yyyy + "-" + mm + "-" + dd;
+    document.getElementById("shiftDate").value =
+        yyyy + "-" + mm + "-" + dd;
 }
 
 function setEndToNow() {
     const now = new Date();
+
     let hour = now.getHours();
     let minute = now.getMinutes();
 
-    const useQuarterHour = document.getElementById("useQuarterHour").checked;
+    const useQuarterHour =
+        document.getElementById("useQuarterHour").checked;
 
     if (useQuarterHour) {
         if (minute < 8) minute = 0;
         else if (minute < 23) minute = 15;
         else if (minute < 38) minute = 30;
         else if (minute < 53) minute = 45;
-        else { minute = 0; hour = (hour + 1) % 24; }
+        else {
+            minute = 0;
+            hour = (hour + 1) % 24;
+        }
     } else {
         if (minute < 15) minute = 0;
         else if (minute < 45) minute = 30;
-        else { minute = 0; hour = (hour + 1) % 24; }
+        else {
+            minute = 0;
+            hour = (hour + 1) % 24;
+        }
     }
 
-    const value = String(hour).padStart(2, "0") + ":" + String(minute).padStart(2, "0");
+    const value =
+        String(hour).padStart(2, "0") +
+        ":" +
+        String(minute).padStart(2, "0");
+
     document.getElementById("endTime").value = value;
 
     if (!shiftDateWasManuallyChanged) {
-        const startVal = document.getElementById("startTime").value;
+        const startVal =
+            document.getElementById("startTime").value;
+
         const targetDate = new Date(now);
 
         if (startVal && startVal !== "--") {
             const startParts = startVal.split(":");
-            const startMinutes = Number(startParts[0]) * 60 + Number(startParts[1]);
+
+            const startMinutes =
+                Number(startParts[0]) * 60 +
+                Number(startParts[1]);
+
             const endMinutes = hour * 60 + minute;
-            if (endMinutes < startMinutes) targetDate.setDate(targetDate.getDate() - 1);
+
+            if (endMinutes < startMinutes) {
+                targetDate.setDate(targetDate.getDate() - 1);
+            }
         }
 
         const yyyy = targetDate.getFullYear();
         const mm = String(targetDate.getMonth() + 1).padStart(2, "0");
         const dd = String(targetDate.getDate()).padStart(2, "0");
-        document.getElementById("shiftDate").value = yyyy + "-" + mm + "-" + dd;
+
+        document.getElementById("shiftDate").value =
+            yyyy + "-" + mm + "-" + dd;
     }
 }
 
 const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+const months = [
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+];
 
 function formatDate(date) {
-    return days[date.getDay()] + " " + months[date.getMonth()] + " " + date.getDate();
+    return (
+        days[date.getDay()] +
+        " " +
+        months[date.getMonth()] +
+        " " +
+        date.getDate()
+    );
 }
 
 function formatShiftDates(startDate, endDate) {
@@ -693,48 +889,107 @@ function formatShiftDates(startDate, endDate) {
     const endYear = endDate.getFullYear();
 
     if (startYear !== endYear) {
-        return formatDate(startDate) + ", " + startYear + " - " + formatDate(endDate) + ", " + endYear;
+        return (
+            formatDate(startDate) +
+            ", " +
+            startYear +
+            " - " +
+            formatDate(endDate) +
+            ", " +
+            endYear
+        );
     }
+
     if (startDate.getMonth() !== endDate.getMonth()) {
         return formatDate(startDate) + "-" + formatDate(endDate);
     }
+
     if (startDate.getDate() !== endDate.getDate()) {
-        return days[startDate.getDay()] + "-" + days[endDate.getDay()] + " " + months[startDate.getMonth()] + " " + startDate.getDate() + "-" + endDate.getDate();
+        return (
+            days[startDate.getDay()] +
+            "-" +
+            days[endDate.getDay()] +
+            " " +
+            months[startDate.getMonth()] +
+            " " +
+            startDate.getDate() +
+            "-" +
+            endDate.getDate()
+        );
     }
+
     return formatDate(startDate);
 }
 
 function generateLog() {
-    if (!shiftDateWasManuallyChanged) updateAutomaticShiftDate();
+    if (!shiftDateWasManuallyChanged) {
+        updateAutomaticShiftDate();
+    }
 
-    const jobNum = document.getElementById("jobNum").value.trim();
-    const fedProject = document.getElementById("fedProject").value.trim();
-    const locationVal = document.getElementById("location").value.trim();
-    const payItem = document.getElementById("payItem").value.trim();
-    const truck = document.getElementById("truck").value.trim();
-    const startTime = document.getElementById("startTime").value;
-    const endTime = document.getElementById("endTime").value;
-    const breakMins = Number(document.getElementById("breakMins").value);
-    const shiftDateValue = document.getElementById("shiftDate").value;
-    const previousOdometer = document.getElementById("previousOdometer").value.trim();
-    const usePreviousOdometer = document.getElementById("usePreviousOdometer").checked;
-    const odometer = document.getElementById("odometer").value.trim();
+    const jobNum =
+        document.getElementById("jobNum").value.trim();
+
+    const fedProject =
+        document.getElementById("fedProject").value.trim();
+
+    const locationVal =
+        document.getElementById("location").value.trim();
+
+    const payItem =
+        document.getElementById("payItem").value.trim();
+
+    const truck =
+        document.getElementById("truck").value.trim();
+
+    const startTime =
+        document.getElementById("startTime").value;
+
+    const endTime =
+        document.getElementById("endTime").value;
+
+    const showUnpaidBreak =
+        document.getElementById("showUnpaidBreak").checked;
+
+    const breakMins = showUnpaidBreak
+        ? Number(document.getElementById("breakMins").value)
+        : 0;
+
+    const shiftDateValue =
+        document.getElementById("shiftDate").value;
+
+    const previousOdometer =
+        document.getElementById("previousOdometer").value.trim();
+
+    const showPreviousOdometer =
+        document.getElementById("showPreviousOdometer").checked;
+
+    const includeMilesDriven =
+        document.getElementById("includeMilesDriven").checked;
+
+    const odometer =
+        document.getElementById("odometer").value.trim();
 
     if (!startTime || startTime === "--") {
         alert("Please select a Start Time.");
         document.getElementById("startTime").focus();
         return;
     }
+
     if (!endTime || endTime === "--") {
         alert("Please select an End Time.");
         document.getElementById("endTime").focus();
         return;
     }
+
     if (odometer === "") {
-        alert("Please enter the Ending Odometer (or enter 0 for personal vehicle).");
+        alert(
+            "Please enter the Ending Odometer " +
+            "(or enter 0 for personal vehicle)."
+        );
         document.getElementById("odometer").focus();
         return;
     }
+
     if (!shiftDateValue) {
         alert("Please select a Start Date of Shift.");
         document.getElementById("shiftDate").focus();
@@ -742,138 +997,307 @@ function generateLog() {
     }
 
     let milesDriven = null;
-    if (usePreviousOdometer && odometer !== "0") {
+
+    if (includeMilesDriven && odometer !== "0") {
         if (!previousOdometer) {
-            alert("Include Miles Driven is checked, but Previous Odometer is blank.");
+            alert(
+                "Include Driven Miles is checked, " +
+                "but Previous Odometer is blank."
+            );
             document.getElementById("previousOdometer").focus();
             return;
         }
+
         const previous = Number(previousOdometer);
         const ending = Number(odometer);
 
         if (ending < previous) {
-            alert("Ending odometer cannot be less than Previous Odometer.");
+            alert(
+                "Ending odometer cannot be less than Previous Odometer."
+            );
             document.getElementById("odometer").focus();
             return;
         }
+
         milesDriven = ending - previous;
     }
 
     const startDateParts = shiftDateValue.split("-");
-    const startDate = new Date(Number(startDateParts[0]), Number(startDateParts[1]) - 1, Number(startDateParts[2]));
+
+    const startDate = new Date(
+        Number(startDateParts[0]),
+        Number(startDateParts[1]) - 1,
+        Number(startDateParts[2])
+    );
 
     const startParts = startTime.split(":");
     const endParts = endTime.split(":");
 
     const startHour = Number(startParts[0]);
     const startMinute = Number(startParts[1]);
+
     const endHour = Number(endParts[0]);
     const endMinute = Number(endParts[1]);
 
     const start = new Date(startDate);
-    start.setHours(startHour, startMinute, 0, 0);
+
+    start.setHours(
+        startHour,
+        startMinute,
+        0,
+        0
+    );
 
     const end = new Date(startDate);
-    end.setHours(endHour, endMinute, 0, 0);
 
-    if (endHour * 60 + endMinute <= startHour * 60 + startMinute) {
+    end.setHours(
+        endHour,
+        endMinute,
+        0,
+        0
+    );
+
+    if (
+        endHour * 60 + endMinute <=
+        startHour * 60 + startMinute
+    ) {
         end.setDate(end.getDate() + 1);
     }
 
     // Pure wall-clock minute calculation (timezone-agnostic)
-    let startTotalMins = startHour * 60 + startMinute;
-    let endTotalMins = endHour * 60 + endMinute;
+    let startTotalMins =
+        startHour * 60 + startMinute;
+
+    let endTotalMins =
+        endHour * 60 + endMinute;
 
     if (endTotalMins <= startTotalMins) {
-        endTotalMins += 24 * 60; // Shift spans overnight
+        endTotalMins += 24 * 60;
     }
 
-    const rawWorkedMins = endTotalMins - startTotalMins;
-    let totalHours = (rawWorkedMins / 60) - (breakMins / 60);
-    if (totalHours < 0) totalHours = 0;
+    const rawWorkedMins =
+        endTotalMins - startTotalMins;
+
+    let totalHours =
+        (rawWorkedMins / 60) -
+        (breakMins / 60);
+
+    if (totalHours < 0) {
+        totalHours = 0;
+    }
 
     let dstNote = "";
-    if (start.getTimezoneOffset() !== end.getTimezoneOffset()) {
-        const isSpringForward = start.getTimezoneOffset() > end.getTimezoneOffset();
-        const adjustmentAmount = isSpringForward ? -1 : 1;
-        const adjustmentLabel = isSpringForward ? "-1 hour (Spring Forward)" : "+1 hour (Fall Back)";
+
+    if (
+        start.getTimezoneOffset() !==
+        end.getTimezoneOffset()
+    ) {
+        const isSpringForward =
+            start.getTimezoneOffset() >
+            end.getTimezoneOffset();
+
+        const adjustmentAmount =
+            isSpringForward ? -1 : 1;
+
+        const adjustmentLabel =
+            isSpringForward
+                ? "-1 hour (Spring Forward)"
+                : "+1 hour (Fall Back)";
 
         const applyAdjustment = confirm(
             "Daylight Saving Time change detected.\n\n" +
-            "Calculated Hours (Raw): " + totalHours + "\n\n" +
+            "Calculated Hours (Raw): " +
+            totalHours +
+            "\n\n" +
             "Did your clock automatically update for DST?\n" +
-            "Click OK to apply adjustment [" + adjustmentLabel + "]\n" +
+            "Click OK to apply adjustment [" +
+            adjustmentLabel +
+            "]\n" +
             "Click Cancel to keep raw wall-clock hours."
         );
 
         if (applyAdjustment) {
-            totalHours = Math.max(0, totalHours + adjustmentAmount);
-            dstNote = " (DST adjusted: " + (isSpringForward ? "-1 hr" : "+1 hr") + ")";
+            totalHours = Math.max(
+                0,
+                totalHours + adjustmentAmount
+            );
+
+            dstNote =
+                " (DST adjusted: " +
+                (isSpringForward ? "-1 hr" : "+1 hr") +
+                ")";
         } else {
-            dstNote = " (DST reviewed: no adjustment)";
+            dstNote =
+                " (DST reviewed: no adjustment)";
         }
     }
 
     if (totalHours < 4 || totalHours > 16) {
-        if (!confirm("This shift calculates to " + totalHours + " hours.\n\nAre you sure the start and end times are correct?")) return;
+        if (
+            !confirm(
+                "This shift calculates to " +
+                totalHours +
+                " hours.\n\n" +
+                "Are you sure the start and end times are correct?"
+            )
+        ) return;
     }
 
     const lines = [];
-    if (jobNum) lines.push("Job#: " + jobNum);
-    if (fedProject) lines.push(fedProject);
-    if (locationVal) lines.push(locationVal);
-    if (payItem) lines.push(payItem);
 
-    lines.push("Date: " + formatShiftDates(start, end));
-    lines.push("Hours: " + formatTime(startTime) + " - " + formatTime(endTime) + " (" + totalHours + " hours)" + dstNote);
+    if (jobNum) {
+        lines.push("Job#: " + jobNum);
+    }
 
-    if (breakMins > 0) lines.push("Break: " + breakMins + "m unpaid");
-    if (odometer !== "0") lines.push("Odometer: " + odometer);
-    if (usePreviousOdometer && milesDriven !== null) lines.push("Miles: " + milesDriven);
-    if (truck) lines.push(truck);
+    if (fedProject) {
+        lines.push(fedProject);
+    }
+
+    if (locationVal) {
+        lines.push(locationVal);
+    }
+
+    if (payItem) {
+        lines.push(payItem);
+    }
+
+    lines.push(
+        "Date: " +
+        formatShiftDates(start, end)
+    );
+
+    lines.push(
+        "Hours: " +
+        formatTime(startTime) +
+        " - " +
+        formatTime(endTime) +
+        " (" +
+        totalHours +
+        " hours)" +
+        dstNote
+    );
+
+    if (breakMins > 0) {
+        lines.push(
+            "Break: " +
+            breakMins +
+            "m unpaid"
+        );
+    }
+
+    if (odometer !== "0") {
+        lines.push(
+            "Odometer: " +
+            odometer
+        );
+    }
+
+    if (
+        includeMilesDriven &&
+        milesDriven !== null
+    ) {
+        lines.push(
+            "Miles: " +
+            milesDriven
+        );
+    }
+
+    if (truck) {
+        lines.push(truck);
+    }
 
     const output = lines.join("\n");
+
     document.getElementById("output").value = output;
+
     copyText(output);
 
-    if (odometer !== "0") updateProfilePreviousOdometer(odometer);
+    if (odometer !== "0") {
+        updateProfilePreviousOdometer(odometer);
+    }
 }
 
 function updateProfilePreviousOdometer(odometer) {
-    const select = document.getElementById("profileSelect");
+    const select =
+        document.getElementById("profileSelect");
+
     if (select.value === "new") return;
 
     const profiles = getProfiles();
     const index = Number(select.value);
 
     if (profiles[index]) {
-        profiles[index].previousOdometer = String(odometer);
-        profiles[index].usePreviousOdometer = document.getElementById("usePreviousOdometer").checked;
-        profiles[index].useQuarterHour = document.getElementById("useQuarterHour").checked;
+        profiles[index].previousOdometer =
+            String(odometer);
+
+        const showPreviousOdometer =
+            document.getElementById(
+                "showPreviousOdometer"
+            ).checked;
+
+        const includeMilesDriven =
+            document.getElementById(
+                "includeMilesDriven"
+            ).checked;
+
+        profiles[index].showPreviousOdometer =
+            showPreviousOdometer;
+
+        profiles[index].includeMilesDriven =
+            includeMilesDriven;
+
+        // Retain the old field for compatibility.
+        profiles[index].usePreviousOdometer =
+            includeMilesDriven;
+
+        profiles[index].useQuarterHour =
+            document.getElementById(
+                "useQuarterHour"
+            ).checked;
+
+        profiles[index].showUnpaidBreak =
+            document.getElementById(
+                "showUnpaidBreak"
+            ).checked;
+
         saveProfiles(profiles);
     }
-    document.getElementById("previousOdometer").value = String(odometer);
+
+    document.getElementById(
+        "previousOdometer"
+    ).value = String(odometer);
 }
 
 function copyText(text) {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text).then(() => {
-            alert("Log copied to clipboard.");
-        }).catch(() => fallbackCopy(text));
+    if (
+        navigator.clipboard &&
+        navigator.clipboard.writeText
+    ) {
+        navigator.clipboard.writeText(text)
+            .then(() => {
+                alert("Log copied to clipboard.");
+            })
+            .catch(() => fallbackCopy(text));
     } else {
         fallbackCopy(text);
     }
 }
 
 function fallbackCopy(text) {
-    const textarea = document.getElementById("output");
+    const textarea =
+        document.getElementById("output");
+
     textarea.focus();
     textarea.select();
+
     try {
         document.execCommand("copy");
         alert("Log copied to clipboard.");
     } catch (error) {
-        alert("Log generated, but automatic copying failed. Please copy manually.");
+        alert(
+            "Log generated, but automatic copying failed. " +
+            "Please copy manually."
+        );
     }
 }
 
@@ -882,23 +1306,45 @@ function init() {
     renderProfiles();
 
     const today = new Date();
+
     const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, "0");
-    const dd = String(today.getDate()).padStart(2, "0");
-    document.getElementById("shiftDate").value = yyyy + "-" + mm + "-" + dd;
+
+    const mm =
+        String(today.getMonth() + 1)
+        .padStart(2, "0");
+
+    const dd =
+        String(today.getDate())
+        .padStart(2, "0");
+
+    document.getElementById("shiftDate").value =
+        yyyy + "-" + mm + "-" + dd;
+
     shiftDateWasManuallyChanged = false;
 
     const profiles = getProfiles();
-    const lastProfile = localStorage.getItem(LAST_PROFILE_KEY);
 
-    if (lastProfile !== null && profiles[Number(lastProfile)]) {
-        document.getElementById("profileSelect").value = lastProfile;
+    const lastProfile =
+        localStorage.getItem(LAST_PROFILE_KEY);
+
+    if (
+        lastProfile !== null &&
+        profiles[Number(lastProfile)]
+    ) {
+        document.getElementById(
+            "profileSelect"
+        ).value = lastProfile;
     } else {
-        document.getElementById("profileSelect").value = "0";
+        document.getElementById(
+            "profileSelect"
+        ).value = "0";
     }
 
     loadSelectedProfile();
-    document.getElementById("odometer").value = "";
+
+    document.getElementById(
+        "odometer"
+    ).value = "";
 }
 
 window.onload = init;
