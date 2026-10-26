@@ -950,7 +950,7 @@ function updateAutomaticShiftDate() {
 
     const date = new Date();
 
-    if (endMinutes < startMinutes) {
+    if (endMinutes <= startMinutes) {
         date.setDate(date.getDate() - 1);
     }
 
@@ -965,29 +965,18 @@ function updateAutomaticShiftDate() {
 function setEndToNow() {
     const now = new Date();
 
-    let hour = now.getHours();
-    let minute = now.getMinutes();
-
     const useQuarterHour =
         document.getElementById("useQuarterHour").checked;
 
-    if (useQuarterHour) {
-        if (minute < 8) minute = 0;
-        else if (minute < 23) minute = 15;
-        else if (minute < 38) minute = 30;
-        else if (minute < 53) minute = 45;
-        else {
-            minute = 0;
-            hour = (hour + 1) % 24;
-        }
-    } else {
-        if (minute < 15) minute = 0;
-        else if (minute < 45) minute = 30;
-        else {
-            minute = 0;
-            hour = (hour + 1) % 24;
-        }
-    }
+    const step = useQuarterHour ? 15 : 30;
+
+    // Round to the nearest step. setMinutes() rolls over into the next
+    // hour (and past midnight into the next day) when it rounds up to 60.
+    const rounded = new Date(now);
+    rounded.setMinutes(Math.round(now.getMinutes() / step) * step, 0, 0);
+
+    const hour = rounded.getHours();
+    const minute = rounded.getMinutes();
 
     const value =
         String(hour).padStart(2, "0") +
@@ -1000,7 +989,7 @@ function setEndToNow() {
         const startVal =
             document.getElementById("startTime").value;
 
-        const targetDate = new Date(now);
+        let targetDate = new Date(now);
 
         if (startVal && startVal !== "--") {
             const startParts = startVal.split(":");
@@ -1011,7 +1000,12 @@ function setEndToNow() {
 
             const endMinutes = hour * 60 + minute;
 
-            if (endMinutes < startMinutes) {
+            // Count back from the rounded end time (not "now"), so rounding
+            // up past midnight (e.g. 11:55 PM -> 12:00 AM) lands on the
+            // correct start date.
+            targetDate = new Date(rounded);
+
+            if (endMinutes <= startMinutes) {
                 targetDate.setDate(targetDate.getDate() - 1);
             }
         }
