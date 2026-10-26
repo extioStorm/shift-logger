@@ -1,0 +1,308 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: #1e1e1e;
+    color: #f0f0f0;
+    margin: 0;
+    padding: 6px 10px;
+}
+
+.container {
+    max-width: 500px;
+    margin: auto;
+}
+
+h2 {
+    text-align: center;
+    color: #66ff99;
+    margin: 0 0 6px 0;
+    font-size: 1.2rem;
+}
+
+label {
+    display: block;
+    margin-top: 5px;
+    margin-bottom: 2px;
+    font-weight: bold;
+    font-size: 13px;
+}
+
+input,
+select,
+textarea,
+button {
+    font-size: 16px;
+}
+
+input,
+select,
+textarea {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid #555;
+    border-radius: 4px;
+    background: #2b2b2b;
+    color: #fff;
+}
+
+button {
+    padding: 8px;
+    margin-top: 6px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.profile-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.profile-row select {
+    flex: 1;
+}
+
+.small-button {
+    width: auto;
+    white-space: nowrap;
+    padding: 6px 10px;
+}
+
+.two-column {
+    display: flex;
+    gap: 6px;
+}
+
+.two-column > div {
+    flex: 1;
+}
+
+.profile-buttons {
+    display: flex;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+.profile-buttons button {
+    flex: 1;
+}
+
+.checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    color: #66ff99;
+    font-size: 13px;
+}
+
+.checkbox-row input[type="checkbox"] {
+    width: auto;
+    margin: 0;
+    transform: scale(1.1);
+}
+
+.checkbox-row label {
+    margin: 0;
+    color: #66ff99;
+    font-weight: normal;
+}
+
+.checkbox-row input[type="checkbox"]:disabled {
+    opacity: 0.45;
+}
+
+.checkbox-row input[type="checkbox"]:disabled + label {
+    color: #666;
+}
+
+.options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 12px;
+    row-gap: 2px;
+    width: 100%;
+    margin-top: 6px;
+}
+
+.options-grid .checkbox-row {
+    margin-top: 0;
+}
+
+/* Thin Bar Collapsible Panels */
+details {
+    background: #252525;
+    border: 1px solid #3c3c3c;
+    border-radius: 4px;
+    margin-top: 6px;
+    padding: 0;
+    overflow: hidden;
+}
+
+details > summary::-webkit-details-marker {
+    display: none;
+}
+
+summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: bold;
+    color: #66ff99;
+    cursor: pointer;
+    font-size: 13px;
+    user-select: none;
+    padding: 5px 10px;
+    background: #2a2a2a;
+    line-height: 1.2;
+}
+
+summary:hover {
+    background: #333;
+}
+
+summary::after {
+    content: "▶";
+    font-size: 10px;
+    color: #66ff99;
+    transition: transform 0.15s ease;
+}
+
+details[open] > summary::after {
+    transform: rotate(90deg);
+}
+
+details[open] {
+    padding-bottom: 8px;
+}
+
+details > *:not(summary) {
+    margin-left: 8px;
+    margin-right: 8px;
+    width: calc(100% - 16px);
+}
+
+textarea {
+    height: 95px;
+    min-height: 80px;
+    resize: vertical;
+    margin-top: 4px;
+    font-family: monospace;
+    font-size: 13px;
+}
+
+.primary {
+    width: 100%;
+    background: #168a45;
+    color: white;
+    font-weight: bold;
+    padding: 10px;
+    margin-top: 8px;
+}
+
+.secondary {
+    background: #444;
+    color: white;
+}
+
+.danger {
+    background: #8b2020;
+    color: white;
+}
+
+/* Dedicated SMS Button */
+.sms-button {
+    width: 100%;
+    background: #0284c7;
+    color: white;
+    font-weight: bold;
+    padding: 11px;
+    font-size: 15px;
+    margin-top: 8px;
+    border: none;
+    border-radius: 4px;
+}
+
+.sms-button:active {
+    background: #0369a1;
+}
+
+.now-button {
+    width: 100%;
+    background: #1b5e20;
+    color: #121212;
+    font-weight: bold;
+    padding: 10px;
+    font-size: 15px;
+    margin-top: 6px;
+    border: none;
+    border-radius: 4px;
+}
+
+.now-button:active {
+    background: #059669;
+}
+
+.output-label {
+    margin-top: 6px;
+    color: #66ff99;
+}
+
+.label-hint {
+    color: #888;
+    font-weight: normal;
+    font-size: 12px;
+    margin-left: 4px;
+}
+
+/* Toast */
+#toast {
+    position: fixed;
+    left: 50%;
+    top: 4px;
+    transform: translateX(-50%);
+    max-width: 90%;
+    padding: 8px 14px;
+    background: #333;
+    color: #fff;
+    font-size: 14px;
+    border-radius: 6px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    z-index: 10;
+}
+
+#toast.show {
+    opacity: 1;
+}
+
+/* Odometer replace dialog */
+#odometerDialog {
+    width: min(92vw, 420px);
+    padding: 14px;
+    background: #252525;
+    color: #f0f0f0;
+    border: 1px solid #3c3c3c;
+    border-radius: 8px;
+}
+
+#odometerDialog::backdrop {
+    background: rgba(0, 0, 0, 0.65);
+}
+
+#odometerDialog p {
+    margin: 0 0 6px 0;
+    font-size: 15px;
+    line-height: 1.4;
+    white-space: pre-line;
+}
+
+#odometerDialog button {
+    display: block;
+    width: 100%;
+}
