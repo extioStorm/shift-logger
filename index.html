@@ -226,7 +226,32 @@
         color: white;
     }
 
-    /* Option A Styling: Distinct Emerald Accent */
+    /* Distinct SMS Button Styling */
+    .sms-button {
+        width: 100%;
+        background: #0284c7;
+        color: white;
+        font-weight: bold;
+        padding: 10px;
+        font-size: 15px;
+        margin-top: 6px;
+        border: none;
+        border-radius: 4px;
+    }
+
+    .sms-button:active {
+        background: #0369a1;
+    }
+
+    /* Boss Contact Container Card */
+    .boss-section {
+        background: #252525;
+        border: 1px solid #3c3c3c;
+        border-radius: 4px;
+        padding: 8px;
+        margin-top: 8px;
+    }
+
     .now-button {
         width: 100%;
         background: #1b5e20;
@@ -378,8 +403,36 @@
 </details>
 
 <button class="primary" onclick="generateLog()">
-    Generate & Copy Log
+    Generate &amp; Copy Log
 </button>
+
+<!-- Boss SMS Dispatch Section -->
+<div class="boss-section">
+    <label for="bossPhone" style="margin-top: 0; color: #66ff99;">Boss's Phone Number:</label>
+    <div style="display: flex; gap: 6px; margin-top: 3px;">
+        <input 
+            type="tel" 
+            id="bossPhone" 
+            placeholder="Enter or pick phone number..." 
+            autocomplete="tel"
+            oninput="saveBossPhone()"
+            style="flex: 1;"
+        >
+        <button 
+            type="button" 
+            id="pickContactBtn" 
+            class="secondary small-button" 
+            style="display: none; margin-top: 0;"
+            onclick="pickBossContact()"
+        >
+            📇 Contacts
+        </button>
+    </div>
+
+    <button type="button" class="sms-button" onclick="sendToBoss()">
+        ✉️ Send to Boss (SMS)
+    </button>
+</div>
 
 <label class="output-label" for="output">Output:</label>
 <textarea id="output" readonly></textarea>
@@ -393,6 +446,7 @@
 <script>
 const STORAGE_KEY = "shift_profiles";
 const LAST_PROFILE_KEY = "last_active_profile";
+const BOSS_PHONE_KEY = "shiftlogger_boss_phone";
 
 let shiftDateWasManuallyChanged = false;
 
@@ -427,6 +481,68 @@ if ('serviceWorker' in navigator) {
     });
 }
 
+// ─── Boss Contact & SMS Features ───────────────────────────────────────
+function saveBossPhone() {
+    const phone = document.getElementById("bossPhone").value.trim();
+    localStorage.setItem(BOSS_PHONE_KEY, phone);
+}
+
+function loadBossPhone() {
+    const savedPhone = localStorage.getItem(BOSS_PHONE_KEY);
+    if (savedPhone) {
+        document.getElementById("bossPhone").value = savedPhone;
+    }
+}
+
+function checkContactPickerSupport() {
+    if ('contacts' in navigator && 'ContactsManager' in window) {
+        const btn = document.getElementById('pickContactBtn');
+        if (btn) btn.style.display = 'inline-block';
+    }
+}
+
+async function pickBossContact() {
+    try {
+        const contacts = await navigator.contacts.select(['tel'], { multiple: false });
+        if (contacts && contacts.length > 0 && contacts[0].tel && contacts[0].tel.length > 0) {
+            const selectedPhone = contacts[0].tel[0];
+            document.getElementById('bossPhone').value = selectedPhone;
+            saveBossPhone();
+        }
+    } catch (err) {
+        console.warn("Contact picker cancelled or failed:", err);
+    }
+}
+
+function sendToBoss() {
+    let output = document.getElementById("output").value;
+
+    // If log hasn't been generated yet, generate it now
+    if (!output) {
+        generateLog();
+        output = document.getElementById("output").value;
+        if (!output) return; // If validation failed, exit
+    }
+
+    const phone = document.getElementById("bossPhone").value.trim();
+    if (!phone) {
+        alert("Please enter or pick a phone number for your boss first.");
+        document.getElementById("bossPhone").focus();
+        return;
+    }
+
+    // Clean phone number (leave digits and leading plus)
+    const cleanNumber = phone.replace(/[^\d+]/g, '');
+
+    // iOS Safari uses '&body=' while Android uses '?body='
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const delimiter = isIOS ? '&' : '?';
+
+    const smsUrl = `sms:${cleanNumber}${delimiter}body=${encodeURIComponent(output)}`;
+    window.location.href = smsUrl;
+}
+
+// ─── Profiles & Shift Logic ───────────────────────────────────────────
 const defaultProfile = {
     name: "Default",
     jobNum: "000000",
@@ -1312,6 +1428,8 @@ function fallbackCopy(text) {
 function init() {
     populateTimes(false);
     renderProfiles();
+    loadBossPhone();
+    checkContactPickerSupport();
 
     const today = new Date();
 
