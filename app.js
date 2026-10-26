@@ -40,6 +40,9 @@ function storageRemove(key) {
     try { localStorage.removeItem(key); } catch (e) { /* storage unavailable */ }
 }
 
+const TOAST_MS = 4000;
+const ODOMETER_REPLACE_WINDOW_MS = 20 * 60 * 60 * 1000; // 20 hours
+
 let toastTimer = null;
 
 function showToast(message) {
@@ -47,7 +50,7 @@ function showToast(message) {
     toast.textContent = message;
     toast.classList.add("show");
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => toast.classList.remove("show"), 2000);
+    toastTimer = setTimeout(() => toast.classList.remove("show"), TOAST_MS);
 }
 
 // ─── PWA Install Prompt ───────────────────────────────────────────────
@@ -119,11 +122,11 @@ function autoSaveBossPhoneToProfile() {
     saveProfiles();
 }
 
-function sendToBoss() {
+async function sendToBoss() {
     let output = $("output").value;
 
     if (!output) {
-        generateLog();
+        await generateLog();
         output = $("output").value;
         if (!output) return;
     }
@@ -165,6 +168,7 @@ const BLANK_PROFILE = {
     truck: "",
     bossPhone: "",
     previousOdometer: "",
+    lastOdometer: null,   // { value, priorValue, savedAt } of the last generated ending odometer
     startTime: "--",
     endTime: "--",
     showPreviousOdometer: false,
@@ -180,11 +184,22 @@ const DEFAULT_PROFILE = {
     payItem: "420***"
 };
 
+function isValidOdometerRecord(record) {
+    return !!record &&
+        typeof record === "object" &&
+        typeof record.value === "string" &&
+        typeof record.priorValue === "string" &&
+        Number.isFinite(record.savedAt);
+}
+
 // Keep only known fields, filling in anything missing
 function normalizeProfile(profile) {
     const clean = {};
     for (const key of Object.keys(BLANK_PROFILE)) {
         clean[key] = profile[key] ?? BLANK_PROFILE[key];
+    }
+    if (!isValidOdometerRecord(clean.lastOdometer)) {
+        clean.lastOdometer = null;
     }
     return clean;
 }
@@ -326,6 +341,7 @@ function saveProfile() {
     }
 
     const profile = readProfileFromForm(profileName);
+    profile.lastOdometer = existingProfile ? existingProfile.lastOdometer : null;
 
     if (existingProfile) {
         profiles[selectedIndex] = profile;
@@ -369,11 +385,12 @@ function deleteProfile() {
     createNewBlankProfile();
 }
 
-function updateProfilePreviousOdometer(odometer) {
+function updateProfilePreviousOdometer(odometer, record) {
     const profile = profiles[selectedProfileIndex()];
 
     if (profile) {
         profile.previousOdometer = String(odometer);
+        if (record) profile.lastOdometer = record;
         saveProfiles();
     }
 
@@ -553,7 +570,7 @@ function formatShiftDates(startDate, endDate) {
 }
 
 // ─── Log generation ───────────────────────────────────────────────────
-function generateLog() {
+async function generateLog() {
     if (!shiftDateWasManuallyChanged) {
         updateAutomaticShiftDate();
     }
@@ -603,10 +620,48 @@ function generateLog() {
         return;
     }
 
+    // Same-day check: was an ending odometer already logged recently for this profile?
+    const profile = profiles[selectedProfileIndex()];
+    const lastRecord = profile ? profile.lastOdometer : null;
+
+    let effectivePrevious = previousOdometer;
+    let newRecord = null;
+
+    if (odometer !== "0" && profile) {
+        const now = Date.now();
+        const age = lastRecord ? now - lastRecord.savedAt : Infinity;
+        const recent = !!lastRecord && age >= 0 && age < ODOMETER_REPLACE_WINDOW_MS;
+
+        // If the Previous Odometer box still holds the earlier reading (or is blank),
+        // the user hasn't typed their own value, so we may swap in the one before it.
+        const previousUntouched =
+            previousOdometer === "" ||
+            (!!lastRecord && Number(previousOdometer) === Number(lastRecord.value));
+
+        if (recent && Number(odometer) === Number(lastRecord.value)) {
+            // Same reading again (e.g. regenerating the same log): keep the record and
+            // keep measuring miles from before it, so Miles doesn't drop to 0.
+            if (previousUntouched) effectivePrevious = lastRecord.priorValue;
+            newRecord = lastRecord;
+        } else if (recent) {
+            const choice = await askOdometerReplace(lastRecord, odometer);
+
+            if (choice === "cancel") return;
+
+            if (choice === "replace" && previousUntouched) {
+                effectivePrevious = lastRecord.priorValue;
+            }
+
+            newRecord = { value: odometer, priorValue: effectivePrevious, savedAt: now };
+        } else {
+            newRecord = { value: odometer, priorValue: previousOdometer, savedAt: now };
+        }
+    }
+
     let milesDriven = null;
 
     if (includeMilesDriven && odometer !== "0") {
-        if (!previousOdometer) {
+        if (!effectivePrevious) {
             alert(
                 "Include Driven Miles is checked, " +
                 "but Previous Odometer is blank."
@@ -615,7 +670,7 @@ function generateLog() {
             return;
         }
 
-        const previous = Number(previousOdometer);
+        const previous = Number(effectivePrevious);
         const ending = Number(odometer);
 
         if (ending < previous) {
@@ -723,8 +778,58 @@ function generateLog() {
     copyText(output);
 
     if (odometer !== "0") {
-        updateProfilePreviousOdometer(odometer);
+        updateProfilePreviousOdometer(odometer, newRecord);
     }
+}
+
+// ─── Odometer replace dialog ──────────────────────────────────────────
+let odometerAnswer = "cancel";
+
+function describeSavedTime(timestamp) {
+    const date = new Date(timestamp);
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    let day;
+    if (toISODate(date) === toISODate(new Date())) day = "today";
+    else if (toISODate(date) === toISODate(yesterday)) day = "yesterday";
+    else day = formatDate(date);
+
+    return day + " at " + formatTime(toHHMM(date.getHours(), date.getMinutes()));
+}
+
+// Resolves to "replace", "new" or "cancel"
+function askOdometerReplace(record, newValue) {
+    const dialog = $("odometerDialog");
+
+    let message =
+        "You already logged an ending odometer of " + record.value +
+        " " + describeSavedTime(record.savedAt) + ".\n\n" +
+        "You're now entering " + newValue + ". Replace the earlier reading?";
+
+    if (record.priorValue) {
+        message +=
+            "\n\nReplacing measures miles from " + record.priorValue +
+            " (the reading before it).";
+    }
+
+    // Very old browsers without <dialog>: OK = replace, Cancel = add as new
+    if (typeof dialog.showModal !== "function") {
+        return Promise.resolve(confirm(message + "\n\nOK = Replace, Cancel = Add as new reading") ? "replace" : "new");
+    }
+
+    $("odometerDialogText").textContent = message;
+    odometerAnswer = "cancel"; // Escape / back button closes the dialog = cancel
+
+    return new Promise((resolve) => {
+        dialog.addEventListener("close", () => resolve(odometerAnswer), { once: true });
+        dialog.showModal();
+    });
+}
+
+function answerOdometerDialog(answer) {
+    odometerAnswer = answer;
+    $("odometerDialog").close();
 }
 
 // ─── Clipboard ────────────────────────────────────────────────────────
@@ -776,6 +881,10 @@ function bindEvents() {
     on("useQuarterHour", "change", timeRoundingChanged);
     on("showUnpaidBreak", "change", toggleUnpaidBreak);
     on("saveSettingsBtn", "click", saveProfile);
+
+    on("odoReplaceBtn", "click", () => answerOdometerDialog("replace"));
+    on("odoNewBtn", "click", () => answerOdometerDialog("new"));
+    on("odoCancelBtn", "click", () => answerOdometerDialog("cancel"));
 
     on("generateBtn", "click", generateLog);
     on("sendBtn", "click", sendToBoss);

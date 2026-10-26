@@ -263,7 +263,7 @@ textarea {
 #toast {
     position: fixed;
     left: 50%;
-    bottom: 24px;
+    top: 4px;
     transform: translateX(-50%);
     max-width: 90%;
     padding: 8px 14px;
@@ -279,4 +279,30 @@ textarea {
 
 #toast.show {
     opacity: 1;
+}
+
+/* Odometer replace dialog */
+#odometerDialog {
+    width: min(92vw, 420px);
+    padding: 14px;
+    background: #252525;
+    color: #f0f0f0;
+    border: 1px solid #3c3c3c;
+    border-radius: 8px;
+}
+
+#odometerDialog::backdrop {
+    background: rgba(0, 0, 0, 0.65);
+}
+
+#odometerDialog p {
+    margin: 0 0 6px 0;
+    font-size: 15px;
+    line-height: 1.4;
+    white-space: pre-line;
+}
+
+#odometerDialog button {
+    display: block;
+    width: 100%;
 }
