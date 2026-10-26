@@ -226,30 +226,21 @@
         color: white;
     }
 
-    /* Distinct SMS Button Styling */
+    /* Dedicated SMS Button */
     .sms-button {
         width: 100%;
         background: #0284c7;
         color: white;
         font-weight: bold;
-        padding: 10px;
+        padding: 11px;
         font-size: 15px;
-        margin-top: 6px;
+        margin-top: 8px;
         border: none;
         border-radius: 4px;
     }
 
     .sms-button:active {
         background: #0369a1;
-    }
-
-    /* Boss Contact Container Card */
-    .boss-section {
-        background: #252525;
-        border: 1px solid #3c3c3c;
-        border-radius: 4px;
-        padding: 8px;
-        margin-top: 8px;
     }
 
     .now-button {
@@ -294,7 +285,7 @@
 </div>
 
 <details id="jobDetailsPanel">
-    <summary>Job & Project Details</summary>
+    <summary>Job &amp; Project Details</summary>
 
     <label for="jobNum">Job Number:</label>
     <input type="text" id="jobNum" autocomplete="off">
@@ -317,7 +308,29 @@
     <label for="truck">Vehicle / Notes:</label>
     <input type="text" id="truck" autocomplete="off">
 
-    <div class="profile-buttons" style="width: 100%; margin: 6px 0 0 0;">
+    <!-- Boss Phone inside profile settings -->
+    <label for="bossPhone">Boss's Phone Number:</label>
+    <div style="display: flex; gap: 6px; width: 100%; margin: 0;">
+        <input 
+            type="tel" 
+            id="bossPhone" 
+            placeholder="e.g. 555-123-4567" 
+            autocomplete="tel"
+            oninput="autoSaveBossPhoneToProfile()"
+            style="flex: 1;"
+        >
+        <button 
+            type="button" 
+            id="pickContactBtn" 
+            class="secondary small-button" 
+            style="display: none; margin-top: 0;"
+            onclick="pickBossContact()"
+        >
+            📇 Pick
+        </button>
+    </div>
+
+    <div class="profile-buttons" style="width: 100%; margin: 8px 0 0 0;">
         <button class="secondary" onclick="saveProfile()">Save Profile</button>
         <button class="danger" onclick="deleteProfile()">Delete Profile</button>
     </div>
@@ -406,36 +419,13 @@
     Generate &amp; Copy Log
 </button>
 
-<!-- Boss SMS Dispatch Section -->
-<div class="boss-section">
-    <label for="bossPhone" style="margin-top: 0; color: #66ff99;">Boss's Phone Number:</label>
-    <div style="display: flex; gap: 6px; margin-top: 3px;">
-        <input 
-            type="tel" 
-            id="bossPhone" 
-            placeholder="Enter or pick phone number..." 
-            autocomplete="tel"
-            oninput="saveBossPhone()"
-            style="flex: 1;"
-        >
-        <button 
-            type="button" 
-            id="pickContactBtn" 
-            class="secondary small-button" 
-            style="display: none; margin-top: 0;"
-            onclick="pickBossContact()"
-        >
-            📇 Contacts
-        </button>
-    </div>
-
-    <button type="button" class="sms-button" onclick="sendToBoss()">
-        ✉️ Send to Boss (SMS)
-    </button>
-</div>
-
 <label class="output-label" for="output">Output:</label>
 <textarea id="output" readonly></textarea>
+
+<!-- Send to Boss button positioned underneath the Output -->
+<button type="button" class="sms-button" onclick="sendToBoss()">
+    ✉️ Send to Boss (SMS)
+</button>
 
 <button id="installButton" class="secondary" style="display:none; width:100%; margin-top:10px;" onclick="installApp()">
     📲 Install App
@@ -446,7 +436,6 @@
 <script>
 const STORAGE_KEY = "shift_profiles";
 const LAST_PROFILE_KEY = "last_active_profile";
-const BOSS_PHONE_KEY = "shiftlogger_boss_phone";
 
 let shiftDateWasManuallyChanged = false;
 
@@ -481,19 +470,7 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-// ─── Boss Contact & SMS Features ───────────────────────────────────────
-function saveBossPhone() {
-    const phone = document.getElementById("bossPhone").value.trim();
-    localStorage.setItem(BOSS_PHONE_KEY, phone);
-}
-
-function loadBossPhone() {
-    const savedPhone = localStorage.getItem(BOSS_PHONE_KEY);
-    if (savedPhone) {
-        document.getElementById("bossPhone").value = savedPhone;
-    }
-}
-
+// ─── Contact Picker & SMS Handling ────────────────────────────────────
 function checkContactPickerSupport() {
     if ('contacts' in navigator && 'ContactsManager' in window) {
         const btn = document.getElementById('pickContactBtn');
@@ -507,34 +484,44 @@ async function pickBossContact() {
         if (contacts && contacts.length > 0 && contacts[0].tel && contacts[0].tel.length > 0) {
             const selectedPhone = contacts[0].tel[0];
             document.getElementById('bossPhone').value = selectedPhone;
-            saveBossPhone();
+            autoSaveBossPhoneToProfile();
         }
     } catch (err) {
         console.warn("Contact picker cancelled or failed:", err);
     }
 }
 
+function autoSaveBossPhoneToProfile() {
+    const select = document.getElementById("profileSelect");
+    if (select.value === "new") return;
+
+    const profiles = getProfiles();
+    const index = Number(select.value);
+
+    if (profiles[index]) {
+        profiles[index].bossPhone = document.getElementById("bossPhone").value.trim();
+        saveProfiles(profiles);
+    }
+}
+
 function sendToBoss() {
     let output = document.getElementById("output").value;
 
-    // If log hasn't been generated yet, generate it now
     if (!output) {
         generateLog();
         output = document.getElementById("output").value;
-        if (!output) return; // If validation failed, exit
+        if (!output) return;
     }
 
     const phone = document.getElementById("bossPhone").value.trim();
     if (!phone) {
-        alert("Please enter or pick a phone number for your boss first.");
+        alert("Please enter or pick a phone number for your boss in Job & Project Details.");
+        document.getElementById("jobDetailsPanel").open = true;
         document.getElementById("bossPhone").focus();
         return;
     }
 
-    // Clean phone number (leave digits and leading plus)
     const cleanNumber = phone.replace(/[^\d+]/g, '');
-
-    // iOS Safari uses '&body=' while Android uses '?body='
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     const delimiter = isIOS ? '&' : '?';
 
@@ -542,7 +529,7 @@ function sendToBoss() {
     window.location.href = smsUrl;
 }
 
-// ─── Profiles & Shift Logic ───────────────────────────────────────────
+// ─── Profile & Shift Tracking Logic ───────────────────────────────────
 const defaultProfile = {
     name: "Default",
     jobNum: "000000",
@@ -550,6 +537,7 @@ const defaultProfile = {
     location: "",
     payItem: "420***",
     truck: "",
+    bossPhone: "",
     startTime: "--",
     endTime: "--",
     previousOdometer: "",
@@ -604,6 +592,7 @@ function getProfiles() {
         if (!Array.isArray(profiles) || profiles.length === 0) return [defaultProfile];
 
         profiles.forEach(profile => {
+            if (!("bossPhone" in profile)) profile.bossPhone = "";
             if (!("previousOdometer" in profile)) profile.previousOdometer = "";
             if (!("usePreviousOdometer" in profile)) profile.usePreviousOdometer = false;
 
@@ -662,6 +651,7 @@ function loadSelectedProfile() {
     document.getElementById("location").value = profile.location || profile.hwy || "";
     document.getElementById("payItem").value = profile.payItem || "";
     document.getElementById("truck").value = profile.truck || "";
+    document.getElementById("bossPhone").value = profile.bossPhone || "";
 
     document.getElementById("previousOdometer").value = profile.previousOdometer || "";
 
@@ -709,6 +699,7 @@ function createNewBlankProfile() {
     document.getElementById("location").value = "";
     document.getElementById("payItem").value = "";
     document.getElementById("truck").value = "";
+    document.getElementById("bossPhone").value = "";
 
     document.getElementById("useQuarterHour").checked = false;
     populateTimes(false);
@@ -778,6 +769,7 @@ function saveProfile() {
         location: document.getElementById("location").value.trim(),
         payItem: document.getElementById("payItem").value.trim(),
         truck: document.getElementById("truck").value.trim(),
+        bossPhone: document.getElementById("bossPhone").value.trim(),
         startTime: document.getElementById("startTime").value,
         endTime: document.getElementById("endTime").value,
         previousOdometer: document.getElementById("previousOdometer").value.trim(),
@@ -1428,7 +1420,6 @@ function fallbackCopy(text) {
 function init() {
     populateTimes(false);
     renderProfiles();
-    loadBossPhone();
     checkContactPickerSupport();
 
     const today = new Date();
