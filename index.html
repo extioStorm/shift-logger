@@ -308,22 +308,22 @@
     <label for="truck">Vehicle / Notes:</label>
     <input type="text" id="truck" autocomplete="off">
 
-    <!-- Boss Phone inside profile settings -->
+    <!-- Boss Phone inside profile settings with matching alignment -->
     <label for="bossPhone">Boss's Phone Number:</label>
-    <div style="display: flex; gap: 6px; width: 100%; margin: 0;">
+    <div style="display: flex; gap: 6px; align-items: center;">
         <input 
             type="tel" 
             id="bossPhone" 
             placeholder="e.g. 555-123-4567" 
             autocomplete="tel"
             oninput="autoSaveBossPhoneToProfile()"
-            style="flex: 1;"
+            style="flex: 1; min-width: 0;"
         >
         <button 
             type="button" 
             id="pickContactBtn" 
             class="secondary small-button" 
-            style="display: none; margin-top: 0;"
+            style="margin-top: 0;"
             onclick="pickBossContact()"
         >
             📇 Pick
@@ -471,23 +471,34 @@ if ('serviceWorker' in navigator) {
 }
 
 // ─── Contact Picker & SMS Handling ────────────────────────────────────
-function checkContactPickerSupport() {
-    if ('contacts' in navigator && 'ContactsManager' in window) {
-        const btn = document.getElementById('pickContactBtn');
-        if (btn) btn.style.display = 'inline-block';
-    }
-}
-
 async function pickBossContact() {
+    // Check if Contact Picker API is supported in this browser
+    if (!('contacts' in navigator && navigator.contacts && 'select' in navigator.contacts)) {
+        alert("The Contact Picker feature is only supported on mobile devices running Chrome/Edge on Android over HTTPS.\n\nPlease type or paste the phone number manually.");
+        document.getElementById('bossPhone').focus();
+        return;
+    }
+
     try {
-        const contacts = await navigator.contacts.select(['tel'], { multiple: false });
+        let props = ['tel'];
+        if ('getProperties' in navigator.contacts) {
+            const supportedProps = await navigator.contacts.getProperties();
+            if (!supportedProps.includes('tel')) {
+                alert("Your device does not support selecting phone numbers via the Contact Picker.");
+                return;
+            }
+        }
+
+        const contacts = await navigator.contacts.select(props, { multiple: false });
         if (contacts && contacts.length > 0 && contacts[0].tel && contacts[0].tel.length > 0) {
             const selectedPhone = contacts[0].tel[0];
             document.getElementById('bossPhone').value = selectedPhone;
             autoSaveBossPhoneToProfile();
         }
     } catch (err) {
-        console.warn("Contact picker cancelled or failed:", err);
+        if (err.name !== 'AbortError') {
+            alert("Could not load contact: " + err.message);
+        }
     }
 }
 
@@ -1420,7 +1431,6 @@ function fallbackCopy(text) {
 function init() {
     populateTimes(false);
     renderProfiles();
-    checkContactPickerSupport();
 
     const today = new Date();
 
