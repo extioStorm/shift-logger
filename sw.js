@@ -1,10 +1,12 @@
 // Bump this only if you change the ASSETS list or want to force-clear old caches.
 // Edits to index.html etc. are picked up automatically (network-first, below).
-const CACHE_NAME = 'shift-logger-v2';
+const CACHE_NAME = 'shift-logger-v3';
 
 const ASSETS = [
   './',
   './index.html',
+  './styles.css',
+  './app.js',
   './manifest.json',
   './shift-logger-favicon-48.png',
   './shift-logger-icon-192.png',
