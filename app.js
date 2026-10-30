@@ -133,7 +133,7 @@ async function sendToBoss() {
 
     const phone = $("bossPhone").value.trim();
     if (!phone) {
-        alert("Please enter or pick a phone number for your boss in Job & Project Details.");
+        alert("Please enter or pick a log send number in Job & Project Details.");
         $("jobDetailsPanel").open = true;
         $("bossPhone").focus();
         return;
