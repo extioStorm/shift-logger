@@ -916,6 +916,10 @@ function init() {
 
     loadSelectedProfile();
 
+    // Always start with no end time, so it has to be set on purpose
+    // (NOW button or manual pick) instead of reusing the saved one.
+    $("endTime").value = "--";
+
     $("odometer").value = "";
 }
 
